@@ -1,3 +1,4 @@
+use crate::dsp::modulation::{Modulation, ModulationTarget};
 use crate::dsp::phase_generator::PhaseGenerator;
 use crate::dsp::types::DEFAULT_LFO_FREQ;
 
@@ -7,18 +8,19 @@ use super::waveform::Waveform;
 pub struct Lfo {
     generator: PhaseGenerator,
     depth: Sample,
+    target: ModulationTarget,
 }
 
 impl Lfo {
     pub fn new(rate: SampleRate) -> Self {
         let mut generator = PhaseGenerator::new(rate);
 
-        // LFO default frequency should be slow, not audio-rate
         generator.set_freq(DEFAULT_LFO_FREQ);
 
         Self {
             generator,
             depth: 1.0,
+            target: ModulationTarget::Vibrato,
         }
     }
 
@@ -34,6 +36,10 @@ impl Lfo {
 
     pub fn set_depth(&mut self, depth: Sample) {
         self.depth = depth;
+    }
+
+    pub fn set_target(&mut self, target: ModulationTarget) {
+        self.target = target;
     }
 
     // Getters
@@ -54,16 +60,24 @@ impl Lfo {
         self.generator.phase()
     }
 
+    pub fn target(&self) -> ModulationTarget {
+        self.target
+    }
+
     // Control
 
     pub fn reset(&mut self) {
         self.generator.reset();
     }
 
-    // Generate modulation sample
+    // Output
 
     pub fn next_sample(&mut self) -> Sample {
         self.generator.next_sample() * self.depth
+    }
+
+    pub fn modulation(&mut self) -> Modulation {
+        Modulation::new(self.target, self.next_sample())
     }
 }
 
@@ -87,9 +101,10 @@ mod tests {
         let lfo = Lfo::new(48_000.0);
 
         assert_eq!(lfo.waveform(), Waveform::Sine);
-        assert_eq!(lfo.freq(), 5.0);
+        assert_eq!(lfo.freq(), DEFAULT_LFO_FREQ);
         assert_eq!(lfo.phase(), 0.0);
         assert_eq!(lfo.depth(), 1.0);
+        assert_eq!(lfo.target(), ModulationTarget::Vibrato);
     }
 
     #[test]
@@ -120,6 +135,15 @@ mod tests {
     }
 
     #[test]
+    fn set_target_changes_target() {
+        let mut lfo = Lfo::new(48_000.0);
+
+        lfo.set_target(ModulationTarget::Pitch);
+
+        assert_eq!(lfo.target(), ModulationTarget::Pitch);
+    }
+
+    #[test]
     fn reset_returns_phase_to_zero() {
         let mut lfo = Lfo::new(48_000.0);
 
@@ -141,6 +165,7 @@ mod tests {
         lfo.set_freq(2.0);
         lfo.set_depth(0.5);
         lfo.set_waveform(Waveform::Square);
+        lfo.set_target(ModulationTarget::Pitch);
 
         lfo.next_sample();
 
@@ -149,6 +174,7 @@ mod tests {
         assert_eq!(lfo.freq(), 2.0);
         assert_eq!(lfo.depth(), 0.5);
         assert_eq!(lfo.waveform(), Waveform::Square);
+        assert_eq!(lfo.target(), ModulationTarget::Pitch);
     }
 
     #[test]
@@ -185,8 +211,6 @@ mod tests {
 
         lfo.set_depth(0.5);
 
-        // PhaseGenerator is responsible for waveform generation.
-        // Set phase directly through the embedded generator.
         lfo.generator.set_phase(0.25);
 
         let sample = lfo.next_sample();
@@ -224,5 +248,32 @@ mod tests {
                 sample
             );
         }
+    }
+
+    #[test]
+    fn modulation_contains_target_and_value() {
+        let mut lfo = Lfo::new(48_000.0);
+
+        lfo.set_target(ModulationTarget::Pitch);
+
+        let modulation = lfo.modulation();
+
+        assert_eq!(modulation.target(), ModulationTarget::Pitch);
+
+        assert!((-1.0..=1.0).contains(&modulation.value()));
+    }
+
+    #[test]
+    fn target_does_not_affect_generation() {
+        let mut pitch_lfo = Lfo::new(48_000.0);
+        let mut volume_lfo = Lfo::new(48_000.0);
+
+        pitch_lfo.set_target(ModulationTarget::Pitch);
+        volume_lfo.set_target(ModulationTarget::Volume);
+
+        let a = pitch_lfo.next_sample();
+        let b = volume_lfo.next_sample();
+
+        assert_approx_eq(a, b);
     }
 }

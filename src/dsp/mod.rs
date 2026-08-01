@@ -2,6 +2,7 @@ pub mod envelope;
 pub mod filter;
 pub mod lfo;
 pub mod mixer;
+pub mod modulation;
 pub mod oscillator;
 pub mod phase_generator;
 pub mod types;
