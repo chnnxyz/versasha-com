@@ -1,3 +1,5 @@
+use crate::dsp::mixer::Mixer;
+
 use super::envelope::{Envelope, EnvelopeState};
 use super::oscillator::Oscillator;
 use super::types::{Frequency, Sample, SampleRate};
@@ -7,6 +9,7 @@ pub struct Voice {
     osc2: Oscillator,
     envelope: Envelope,
     frequency: Frequency,
+    mixer: Mixer,
 }
 
 impl Voice {
@@ -16,6 +19,7 @@ impl Voice {
             osc2: Oscillator::new(rate),
             envelope: Envelope::new(rate),
             frequency: 0.0,
+            mixer: Mixer::new(),
         }
     }
 
@@ -34,7 +38,13 @@ impl Voice {
         let osc1 = self.osc1.next_sample();
         let osc2 = self.osc2.next_sample();
 
-        let mixed = (osc1 + osc2) * 0.5;
+        // Clean the mixer and re-add
+        self.mixer.reset();
+
+        self.mixer.add(osc1);
+        self.mixer.add(osc2);
+
+        let mixed = self.mixer.output();
 
         let amp = self.envelope.next_sample();
 
