@@ -3,6 +3,7 @@ pub mod filter;
 pub mod lfo;
 pub mod mixer;
 pub mod oscillator;
+pub mod phase_generator;
 pub mod types;
 pub mod voice;
 pub mod waveform;
