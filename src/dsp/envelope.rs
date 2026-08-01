@@ -1,5 +1,3 @@
-use crate::dsp::envelope::EnvelopeState::Sustain;
-
 use super::types::{Sample, SampleRate};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,7 +30,7 @@ pub struct Envelope {
 }
 
 impl Envelope {
-    pub fn new(sample_rate: SampleRate) -> Self {
+    pub fn new(rate: SampleRate) -> Self {
         let attack = 0.01;
         let decay = 0.1;
         let sustain = 0.8;
@@ -48,11 +46,11 @@ impl Envelope {
 
             level: 0.0,
 
-            attack_increment: 1.0 / (attack * sample_rate),
-            decay_increment: (1.0 - sustain) / (decay * sample_rate),
+            attack_increment: 1.0 / (attack * rate),
+            decay_increment: (1.0 - sustain) / (decay * rate),
             release_increment: 0.0,
 
-            sample_rate,
+            sample_rate: rate,
         }
     }
 
