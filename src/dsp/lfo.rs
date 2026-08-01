@@ -1,22 +1,23 @@
+use crate::dsp::phase_generator::PhaseGenerator;
+use crate::dsp::types::DEFAULT_LFO_FREQ;
+
 use super::types::{Frequency, Phase, Sample, SampleRate};
 use super::waveform::Waveform;
 
 pub struct Lfo {
-    waveform: Waveform,
-    phase: Phase,
-    frequency: Frequency,
-    sample_rate: SampleRate,
-
+    generator: PhaseGenerator,
     depth: Sample,
 }
 
 impl Lfo {
     pub fn new(rate: SampleRate) -> Self {
+        let mut generator = PhaseGenerator::new(rate);
+
+        // LFO default frequency should be slow, not audio-rate
+        generator.set_freq(DEFAULT_LFO_FREQ);
+
         Self {
-            waveform: Waveform::Sine,
-            phase: 0.0,
-            frequency: 5.0,
-            sample_rate: rate,
+            generator,
             depth: 1.0,
         }
     }
@@ -24,11 +25,11 @@ impl Lfo {
     // Setters
 
     pub fn set_freq(&mut self, freq: Frequency) {
-        self.frequency = freq;
+        self.generator.set_freq(freq);
     }
 
     pub fn set_waveform(&mut self, waveform: Waveform) {
-        self.waveform = waveform;
+        self.generator.set_waveform(waveform);
     }
 
     pub fn set_depth(&mut self, depth: Sample) {
@@ -38,11 +39,11 @@ impl Lfo {
     // Getters
 
     pub fn freq(&self) -> Frequency {
-        self.frequency
+        self.generator.freq()
     }
 
     pub fn waveform(&self) -> Waveform {
-        self.waveform
+        self.generator.waveform()
     }
 
     pub fn depth(&self) -> Sample {
@@ -50,54 +51,19 @@ impl Lfo {
     }
 
     pub fn phase(&self) -> Phase {
-        self.phase
+        self.generator.phase()
     }
+
+    // Control
 
     pub fn reset(&mut self) {
-        self.phase = 0.0;
+        self.generator.reset();
     }
+
+    // Generate modulation sample
 
     pub fn next_sample(&mut self) -> Sample {
-        let sample = match self.waveform {
-            Waveform::Sine => self.sine(),
-            Waveform::Square => self.square(),
-            Waveform::Saw => self.saw(),
-            Waveform::Triangle => self.triangle(),
-        };
-
-        self.advance_phase();
-
-        sample * self.depth
-    }
-
-    // Helpers
-
-    fn advance_phase(&mut self) {
-        self.phase += self.frequency / self.sample_rate;
-
-        if self.phase >= 1.0 {
-            self.phase -= 1.0;
-        }
-    }
-
-    fn sine(&self) -> Sample {
-        (self.phase * std::f32::consts::TAU).sin()
-    }
-
-    fn square(&self) -> Sample {
-        if self.phase < 0.5 { 1.0 } else { -1.0 }
-    }
-
-    fn saw(&self) -> Sample {
-        (self.phase * 2.0) - 1.0
-    }
-
-    fn triangle(&self) -> Sample {
-        if self.phase < 0.5 {
-            (self.phase * 4.0) - 1.0
-        } else {
-            3.0 - (self.phase * 4.0)
-        }
+        self.generator.next_sample() * self.depth
     }
 }
 
@@ -127,6 +93,33 @@ mod tests {
     }
 
     #[test]
+    fn set_frequency_changes_frequency() {
+        let mut lfo = Lfo::new(48_000.0);
+
+        lfo.set_freq(2.0);
+
+        assert_eq!(lfo.freq(), 2.0);
+    }
+
+    #[test]
+    fn set_waveform_changes_waveform() {
+        let mut lfo = Lfo::new(48_000.0);
+
+        lfo.set_waveform(Waveform::Triangle);
+
+        assert_eq!(lfo.waveform(), Waveform::Triangle);
+    }
+
+    #[test]
+    fn set_depth_changes_depth() {
+        let mut lfo = Lfo::new(48_000.0);
+
+        lfo.set_depth(0.25);
+
+        assert_eq!(lfo.depth(), 0.25);
+    }
+
+    #[test]
     fn reset_returns_phase_to_zero() {
         let mut lfo = Lfo::new(48_000.0);
 
@@ -139,6 +132,23 @@ mod tests {
         lfo.reset();
 
         assert_eq!(lfo.phase(), 0.0);
+    }
+
+    #[test]
+    fn reset_does_not_change_parameters() {
+        let mut lfo = Lfo::new(48_000.0);
+
+        lfo.set_freq(2.0);
+        lfo.set_depth(0.5);
+        lfo.set_waveform(Waveform::Square);
+
+        lfo.next_sample();
+
+        lfo.reset();
+
+        assert_eq!(lfo.freq(), 2.0);
+        assert_eq!(lfo.depth(), 0.5);
+        assert_eq!(lfo.waveform(), Waveform::Square);
     }
 
     #[test]
@@ -157,7 +167,7 @@ mod tests {
     }
 
     #[test]
-    fn phase_wraps() {
+    fn phase_wraps_after_cycle() {
         let mut lfo = Lfo::new(4.0);
 
         lfo.set_freq(1.0);
@@ -170,28 +180,14 @@ mod tests {
     }
 
     #[test]
-    fn sine_wave_known_points() {
-        let mut lfo = Lfo::new(48_000.0);
-
-        lfo.phase = 0.0;
-        assert_approx_eq(lfo.sine(), 0.0);
-
-        lfo.phase = 0.25;
-        assert_approx_eq(lfo.sine(), 1.0);
-
-        lfo.phase = 0.5;
-        assert_approx_eq(lfo.sine(), 0.0);
-
-        lfo.phase = 0.75;
-        assert_approx_eq(lfo.sine(), -1.0);
-    }
-
-    #[test]
     fn depth_scales_output() {
         let mut lfo = Lfo::new(48_000.0);
 
-        lfo.phase = 0.25;
         lfo.set_depth(0.5);
+
+        // PhaseGenerator is responsible for waveform generation.
+        // Set phase directly through the embedded generator.
+        lfo.generator.set_phase(0.25);
 
         let sample = lfo.next_sample();
 
