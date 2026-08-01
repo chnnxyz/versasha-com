@@ -103,3 +103,192 @@ impl PhaseGenerator {
         self.phase = 0.0;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const EPSILON: f32 = 1e-6;
+
+    fn assert_approx_eq(actual: f32, expected: f32) {
+        assert!(
+            (actual - expected).abs() < EPSILON,
+            "expected {}, got {}",
+            expected,
+            actual
+        );
+    }
+
+    #[test]
+    fn new_initializes_defaults() {
+        let generator = PhaseGenerator::new(DEFAULT_SAMPLE_RATE);
+
+        assert_eq!(generator.waveform(), Waveform::Sine);
+        assert_eq!(generator.freq(), DEFAULT_FREQ);
+        assert_eq!(generator.phase(), DEFAULT_PHASE);
+        assert_eq!(generator.sample_rate(), DEFAULT_SAMPLE_RATE);
+    }
+
+    #[test]
+    fn set_frequency_changes_frequency() {
+        let mut generator = PhaseGenerator::new(DEFAULT_SAMPLE_RATE);
+
+        generator.set_freq(220.0);
+
+        assert_eq!(generator.freq(), 220.0);
+    }
+
+    #[test]
+    fn set_waveform_changes_waveform() {
+        let mut generator = PhaseGenerator::new(DEFAULT_SAMPLE_RATE);
+
+        generator.set_waveform(Waveform::Saw);
+
+        assert_eq!(generator.waveform(), Waveform::Saw);
+    }
+
+    #[test]
+    fn set_sample_rate_changes_sample_rate() {
+        let mut generator = PhaseGenerator::new(DEFAULT_SAMPLE_RATE);
+
+        generator.set_sample_rate(44_100.0);
+
+        assert_eq!(generator.sample_rate(), 44_100.0);
+    }
+
+    #[test]
+    fn reset_returns_phase_to_zero() {
+        let mut generator = PhaseGenerator::new(DEFAULT_SAMPLE_RATE);
+
+        generator.set_phase(0.5);
+
+        generator.reset();
+
+        assert_eq!(generator.phase(), 0.0);
+    }
+
+    #[test]
+    fn phase_advances_correctly() {
+        let mut generator = PhaseGenerator::new(4.0);
+
+        generator.set_freq(1.0);
+
+        generator.next_sample();
+
+        assert_approx_eq(generator.phase(), 0.25);
+
+        generator.next_sample();
+
+        assert_approx_eq(generator.phase(), 0.5);
+
+        generator.next_sample();
+
+        assert_approx_eq(generator.phase(), 0.75);
+    }
+
+    #[test]
+    fn phase_wraps_after_full_cycle() {
+        let mut generator = PhaseGenerator::new(4.0);
+
+        generator.set_freq(1.0);
+
+        for _ in 0..4 {
+            generator.next_sample();
+        }
+
+        assert_approx_eq(generator.phase(), 0.0);
+    }
+
+    #[test]
+    fn sine_wave_known_points() {
+        let mut generator = PhaseGenerator::new(DEFAULT_SAMPLE_RATE);
+
+        generator.phase = 0.0;
+        assert_approx_eq(generator.sine(), 0.0);
+
+        generator.phase = 0.25;
+        assert_approx_eq(generator.sine(), 1.0);
+
+        generator.phase = 0.5;
+        assert_approx_eq(generator.sine(), 0.0);
+
+        generator.phase = 0.75;
+        assert_approx_eq(generator.sine(), -1.0);
+    }
+
+    #[test]
+    fn square_wave_known_points() {
+        let mut generator = PhaseGenerator::new(DEFAULT_SAMPLE_RATE);
+
+        generator.phase = 0.0;
+        assert_eq!(generator.square(), 1.0);
+
+        generator.phase = 0.49;
+        assert_eq!(generator.square(), 1.0);
+
+        generator.phase = 0.5;
+        assert_eq!(generator.square(), -1.0);
+
+        generator.phase = 0.99;
+        assert_eq!(generator.square(), -1.0);
+    }
+
+    #[test]
+    fn saw_wave_known_points() {
+        let mut generator = PhaseGenerator::new(DEFAULT_SAMPLE_RATE);
+
+        generator.phase = 0.0;
+        assert_approx_eq(generator.saw(), -1.0);
+
+        generator.phase = 0.5;
+        assert_approx_eq(generator.saw(), 0.0);
+
+        generator.phase = 0.999;
+        assert!(generator.saw() > 0.99);
+    }
+
+    #[test]
+    fn triangle_wave_known_points() {
+        let mut generator = PhaseGenerator::new(DEFAULT_SAMPLE_RATE);
+
+        generator.phase = 0.0;
+        assert_approx_eq(generator.triangle(), -1.0);
+
+        generator.phase = 0.25;
+        assert_approx_eq(generator.triangle(), 0.0);
+
+        generator.phase = 0.5;
+        assert_approx_eq(generator.triangle(), 1.0);
+
+        generator.phase = 0.75;
+        assert_approx_eq(generator.triangle(), 0.0);
+    }
+
+    #[test]
+    fn generated_samples_are_in_range() {
+        let mut generator = PhaseGenerator::new(DEFAULT_SAMPLE_RATE);
+
+        let waveforms = [
+            Waveform::Sine,
+            Waveform::Square,
+            Waveform::Saw,
+            Waveform::Triangle,
+        ];
+
+        for waveform in waveforms {
+            generator.reset();
+            generator.set_waveform(waveform);
+
+            for _ in 0..100_000 {
+                let sample = generator.next_sample();
+
+                assert!(
+                    (-1.0..=1.0).contains(&sample),
+                    "{:?} produced sample {}",
+                    waveform,
+                    sample
+                );
+            }
+        }
+    }
+}
