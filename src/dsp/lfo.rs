@@ -77,7 +77,12 @@ impl Lfo {
     }
 
     pub fn modulation(&mut self) -> Modulation {
-        Modulation::new(self.target, self.next_sample())
+        let sample = self.next_sample();
+
+        // convert -1..1 into 0..255
+        let amount = (((sample + 1.0) * 0.5) * 255.0).clamp(0.0, 255.0) as u8;
+
+        Modulation::new(self.target, amount)
     }
 }
 
@@ -260,7 +265,7 @@ mod tests {
 
         assert_eq!(modulation.target(), ModulationTarget::Pitch);
 
-        assert!((-1.0..=1.0).contains(&modulation.value()));
+        assert!((-1.0..=1.0).contains(&modulation.normalized()));
     }
 
     #[test]

@@ -7,14 +7,14 @@ pub enum ModulationTarget {
     Vibrato,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Modulation {
     target: ModulationTarget,
-    value: Sample,
+    value: u8,
 }
 
 impl Modulation {
-    pub fn new(target: ModulationTarget, value: Sample) -> Self {
+    pub fn new(target: ModulationTarget, value: u8) -> Self {
         Self {
             target: target,
             value: value,
@@ -25,7 +25,11 @@ impl Modulation {
         self.target
     }
 
-    pub fn value(&self) -> Sample {
+    pub fn value(&self) -> u8 {
         self.value
+    }
+
+    pub fn normalized(&self) -> Sample {
+        self.value as Sample / 255.0
     }
 }
