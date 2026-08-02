@@ -33,6 +33,9 @@ impl Oscillator {
         self.generator.set_phase(DEFAULT_PHASE);
     }
 
+    pub fn reset_phase(&mut self) {
+        self.generator.set_phase(DEFAULT_PHASE);
+    }
     // Getters
 
     pub fn freq(&self) -> Frequency {
@@ -200,5 +203,20 @@ mod tests {
                 );
             }
         }
+    }
+    #[test]
+    fn reset_phase_returns_to_zero() {
+        let mut osc = Oscillator::new(48_000.0);
+
+        osc.set_freq(440.0);
+
+        osc.next_sample();
+        osc.next_sample();
+
+        assert_ne!(osc.phase(), 0.0);
+
+        osc.reset_phase();
+
+        assert_eq!(osc.phase(), 0.0);
     }
 }

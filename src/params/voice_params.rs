@@ -1,3 +1,5 @@
+use crate::params::envelope_params::EnvelopeParams;
+
 use super::oscillator_params::OscillatorParams;
 
 #[derive(Debug, Clone, Copy)]
@@ -8,6 +10,7 @@ pub struct VoiceParams {
 
     // cents
     pub osc2_detune: f32,
+    pub envelope: EnvelopeParams,
 }
 
 impl Default for VoiceParams {
@@ -18,6 +21,7 @@ impl Default for VoiceParams {
             osc2: OscillatorParams::default(),
 
             osc2_detune: 0.0,
+            envelope: EnvelopeParams::default(),
         }
     }
 }

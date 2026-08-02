@@ -1,3 +1,4 @@
+use crate::dsp::filter::LowPassFilter;
 use crate::dsp::mixer::Mixer;
 use crate::dsp::modulation::{Modulation, ModulationTarget};
 use crate::dsp::waveform::Waveform;
@@ -19,6 +20,8 @@ pub struct Voice {
 
     modulation: Option<Modulation>,
     params: VoiceParams,
+
+    filter: LowPassFilter,
 }
 
 impl Voice {
@@ -36,6 +39,8 @@ impl Voice {
 
             modulation: None,
             params: VoiceParams::default(),
+
+            filter: LowPassFilter::new(rate),
         }
     }
 
@@ -94,7 +99,30 @@ impl Voice {
         (osc1, osc2)
     }
 
+    fn reset_oscillators(&mut self) {
+        self.osc1.reset_phase();
+
+        self.osc2.reset_phase();
+    }
+
+    fn filter_cutoff_with_envelope(&self, envelope: Sample) -> Frequency {
+        let base = self.filter.cutoff();
+
+        let amount = self.params.envelope.filter_amount;
+
+        base + (base * amount * envelope)
+    }
+
     // public endpoints
+
+    pub fn set_filter_cutoff(&mut self, cutoff: Frequency) {
+        self.filter.set_cutoff(cutoff);
+    }
+
+    pub fn filter_cutoff(&self) -> Frequency {
+        self.filter.cutoff()
+    }
+
     pub fn set_params(&mut self, params: VoiceParams) {
         self.params = params;
 
@@ -106,8 +134,11 @@ impl Voice {
     pub fn params(&self) -> VoiceParams {
         self.params
     }
+
     pub fn note_on(&mut self, freq: Frequency) {
         self.frequency = freq;
+
+        self.reset_oscillators();
 
         self.osc1.set_freq(freq);
         self.osc2.set_freq(freq);
@@ -143,7 +174,13 @@ impl Voice {
 
         let envelope = self.envelope.next_sample();
 
-        self.apply_volume_modulation(mixed * envelope)
+        let cutoff = self.filter_cutoff_with_envelope(envelope);
+
+        self.filter.set_cutoff(cutoff);
+
+        let filtered = self.filter.process(mixed);
+
+        self.apply_volume_modulation(filtered * envelope)
     }
 }
 
@@ -339,5 +376,62 @@ mod tests {
         voice.next_sample();
 
         assert_eq!(voice.osc2.freq(), 880.0);
+    }
+    #[test]
+    fn note_on_resets_oscillator_phases() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.note_on(440.0);
+
+        voice.next_sample();
+        voice.next_sample();
+
+        assert_ne!(voice.osc1.phase(), 0.0);
+
+        voice.note_on(220.0);
+
+        assert_eq!(voice.osc1.phase(), 0.0);
+
+        assert_eq!(voice.osc2.phase(), 0.0);
+    }
+
+    #[test]
+    fn filter_cutoff_can_be_changed() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.set_filter_cutoff(800.0);
+
+        assert_eq!(voice.filter_cutoff(), 800.0);
+    }
+
+    #[test]
+    fn filter_removes_dc_after_reset() {
+        let mut filter = LowPassFilter::new(48_000.0);
+
+        filter.set_cutoff(1000.0);
+
+        let mut output = 0.0;
+
+        for _ in 0..5000 {
+            output = filter.process(1.0);
+        }
+
+        assert!(output > 0.9);
+    }
+    #[test]
+    fn filter_envelope_changes_cutoff() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.set_filter_cutoff(1000.0);
+
+        let mut params = voice.params();
+
+        params.envelope.filter_amount = 1.0;
+
+        voice.set_params(params);
+
+        let cutoff = voice.filter_cutoff_with_envelope(1.0);
+
+        assert_eq!(cutoff, 2000.0);
     }
 }
