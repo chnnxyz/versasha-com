@@ -8,186 +8,363 @@
         content="width=device-width, initial-scale=1"
     >
 
-    <title>Versasha Synth</title>
+    <title>versasha.com</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet"
+    >
 
     <style>
-        :root {
-            color-scheme: dark;
-            font-family:
-                Inter,
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
-        }
-
         * {
             box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100%;
         }
 
         body {
             min-height: 100vh;
             margin: 0;
-            padding: 32px;
+            padding: 24px;
 
-            background: #111;
-            color: #f5f5f5;
+            display: grid;
+            place-items: center;
+
+            background: #000;
+            color: #fff;
+
+            font-family:
+                "JetBrains Mono",
+                monospace;
+        }
+
+        body::before {
+            content: "";
+
+            position: fixed;
+            inset: 0;
+
+            z-index: -1;
+            pointer-events: none;
+
+            background:
+                repeating-linear-gradient(
+                    to bottom,
+                    transparent 0,
+                    transparent 3px,
+                    rgba(255, 255, 255, 0.035) 3px,
+                    rgba(255, 255, 255, 0.035) 4px
+                );
         }
 
         button,
-        input,
-        select {
+        select,
+        input {
             font: inherit;
         }
 
-        .app {
-            width: min(960px, 100%);
-            margin: 0 auto;
+        .synth {
+            width: min(900px, 100%);
+            padding: 24px;
+
+            background: transparent;
         }
 
-        .header {
+        header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 24px;
+            gap: 20px;
 
-            margin-bottom: 24px;
+            margin-bottom: 30px;
         }
 
         h1 {
             margin: 0;
-            font-size: 2rem;
+
+            font-size: 22px;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            text-transform: lowercase;
         }
 
-        .status {
-            color: #aaa;
-        }
+        #status {
+            margin-top: 6px;
 
-        .status.running {
-            color: #90ee90;
+            color: #888;
+
+            font-size: 11px;
+            text-transform: uppercase;
         }
 
         #start {
-            border: 1px solid #777;
-            border-radius: 8px;
-            padding: 10px 18px;
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 8px 14px;
 
-            background: #222;
-            color: white;
+            background: #000;
+            color: #fff;
 
             cursor: pointer;
         }
 
         #start:hover {
-            background: #333;
+            background: #fff;
+            color: #000;
         }
 
         #start:disabled {
             cursor: default;
-            opacity: 0.6;
+            opacity: 0.5;
         }
 
-        .controls {
+        .modules {
             display: grid;
             grid-template-columns:
-                repeat(auto-fit, minmax(260px, 1fr));
-            gap: 16px;
+                repeat(5, minmax(0, 1fr));
+            gap: 20px;
         }
 
-        .section {
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 20px;
+        .module {
+            min-width: 0;
 
-            background: #191919;
+            border-top: 1px solid #fff;
+            padding-top: 12px;
         }
 
-        .section h2 {
+        .module h2 {
             margin: 0 0 18px;
 
-            font-size: 1rem;
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-
-            color: #bbb;
         }
 
-        .control {
-            margin-bottom: 18px;
+        .field {
+            margin-bottom: 22px;
         }
 
-        .control:last-child {
+        .field:last-child {
             margin-bottom: 0;
         }
 
-        .control-header {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-
+        .field-label {
+            display: block;
             margin-bottom: 8px;
+
+            color: #888;
+
+            font-size: 10px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
         }
 
-        .value {
-            min-width: 80px;
-            text-align: right;
-
-            color: #aaa;
-
-            font-variant-numeric: tabular-nums;
-        }
-
-        input[type="range"],
         select {
             width: 100%;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 7px;
+
+            background: #000;
+            color: #fff;
         }
 
-        input[type="range"] {
-            cursor: pointer;
+        select:focus-visible,
+        button:focus-visible {
+            outline: 1px solid #fff;
+            outline-offset: 3px;
         }
 
-        select {
-            border: 1px solid #444;
-            border-radius: 6px;
-            padding: 8px;
+        .knob-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
 
-            background: #222;
-            color: white;
+            user-select: none;
         }
 
-        .keyboard-help {
-            margin-top: 24px;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 18px;
+        .knob {
+            position: relative;
 
-            background: #191919;
+            width: 76px;
+            height: 66px;
+
+            cursor: ns-resize;
+            touch-action: none;
         }
 
-        .keyboard-help code {
-            display: inline-block;
+        .knob-arc {
+            position: absolute;
+            inset: 0;
 
-            margin: 4px;
-            border: 1px solid #555;
-            border-radius: 5px;
-            padding: 5px 8px;
+            width: 76px;
+            height: 66px;
 
-            background: #242424;
+            overflow: visible;
+            pointer-events: none;
+        }
+
+        .knob-track,
+        .knob-value-arc {
+            fill: none;
+
+            stroke-width: 2;
+            stroke-linecap: butt;
+
+            transform-origin: 38px 38px;
+            transform: rotate(135deg);
+        }
+
+        .knob-track {
+            stroke: #333;
+        }
+
+        .knob-value-arc {
+            stroke: #fff;
+
+            stroke-dasharray: 212.06;
+            stroke-dashoffset:
+                calc(
+                    212.06 -
+                    212.06 * var(--normalized)
+                );
+        }
+
+        .indicator {
+            position: absolute;
+            left: 50%;
+            top: 10px;
+
+            width: 1px;
+            height: 28px;
+
+            background: #fff;
+
+            transform:
+                translateX(-50%)
+                rotate(
+                    calc(
+                        -135deg +
+                        var(--normalized) * 270deg
+                    )
+                );
+
+            transform-origin:
+                50%
+                28px;
+        }
+
+        .knob-center {
+            position: absolute;
+
+            left: 50%;
+            top: 37px;
+
+            width: 3px;
+            height: 3px;
+
+            background: #fff;
+
+            transform: translate(-50%, -50%);
+        }
+
+        .knob input {
+            position: absolute;
+
+            width: 1px;
+            height: 1px;
+
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .knob-name {
+            margin-top: 9px;
+
+            color: #888;
+
+            font-size: 10px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .knob-value {
+            margin-top: 4px;
+
+            color: #fff;
+
+            font-size: 11px;
+        }
+
+        .keyboard-info {
+            margin-top: 30px;
+            padding-top: 16px;
+
+            border-top: 1px solid #fff;
+
+            color: #888;
+
+            font-size: 11px;
+            text-align: center;
+        }
+
+        #note-display {
+            margin-top: 9px;
+
+            color: #fff;
+        }
+
+        @media (max-width: 760px) {
+            .modules {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                place-items: start center;
+                padding: 12px;
+            }
+
+            .synth {
+                padding: 12px;
+            }
+
+            header {
+                align-items: flex-start;
+            }
+
+            .modules {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 
 <body>
-    <main class="app">
-        <header class="header">
+    <main class="synth">
+        <header>
             <div>
-                <h1>Versasha</h1>
+                <h1>versasha.com</h1>
 
-                <div
-                    id="status"
-                    class="status"
-                >
+                <div id="status">
                     Audio stopped
                 </div>
             </div>
@@ -196,20 +373,21 @@
                 id="start"
                 type="button"
             >
-                Start audio
+                Start
             </button>
         </header>
 
-        <div class="controls">
-            <section class="section">
+        <div class="modules">
+            <section class="module">
                 <h2>Oscillator 1</h2>
 
-                <div class="control">
-                    <div class="control-header">
-                        <label for="osc1-waveform">
-                            Waveform
-                        </label>
-                    </div>
+                <div class="field">
+                    <label
+                        class="field-label"
+                        for="osc1-waveform"
+                    >
+                        Waveform
+                    </label>
 
                     <select id="osc1-waveform">
                         <option value="0">Sine</option>
@@ -219,40 +397,73 @@
                     </select>
                 </div>
 
-                <div class="control">
-                    <div class="control-header">
-                        <label for="osc1-level">
-                            Level
-                        </label>
-
-                        <output
-                            id="osc1-level-value"
-                            class="value"
+                <div
+                    class="knob-control"
+                    data-knob
+                    data-input="osc1-level"
+                    data-output="osc1-level-value"
+                >
+                    <div class="knob">
+                        <svg
+                            class="knob-arc"
+                            viewBox="0 0 76 66"
+                            aria-hidden="true"
                         >
-                            1.00
-                        </output>
+                            <circle
+                                class="knob-track"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+
+                            <circle
+                                class="knob-value-arc"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input
+                            id="osc1-level"
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value="1"
+                        >
                     </div>
 
-                    <input
-                        id="osc1-level"
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value="1"
+                    <div class="knob-name">
+                        Level
+                    </div>
+
+                    <output
+                        id="osc1-level-value"
+                        class="knob-value"
                     >
+                        1.00
+                    </output>
                 </div>
             </section>
 
-            <section class="section">
+            <section class="module">
                 <h2>Oscillator 2</h2>
 
-                <div class="control">
-                    <div class="control-header">
-                        <label for="osc2-waveform">
-                            Waveform
-                        </label>
-                    </div>
+                <div class="field">
+                    <label
+                        class="field-label"
+                        for="osc2-waveform"
+                    >
+                        Waveform
+                    </label>
 
                     <select id="osc2-waveform">
                         <option value="0">Sine</option>
@@ -262,245 +473,457 @@
                     </select>
                 </div>
 
-                <div class="control">
-                    <div class="control-header">
-                        <label for="osc2-level">
-                            Level
-                        </label>
-
-                        <output
-                            id="osc2-level-value"
-                            class="value"
+                <div
+                    class="knob-control"
+                    data-knob
+                    data-input="osc2-level"
+                    data-output="osc2-level-value"
+                >
+                    <div class="knob">
+                        <svg
+                            class="knob-arc"
+                            viewBox="0 0 76 66"
+                            aria-hidden="true"
                         >
-                            1.00
-                        </output>
+                            <circle
+                                class="knob-track"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+
+                            <circle
+                                class="knob-value-arc"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input
+                            id="osc2-level"
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value="1"
+                        >
                     </div>
 
-                    <input
-                        id="osc2-level"
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value="1"
+                    <div class="knob-name">
+                        Level
+                    </div>
+
+                    <output
+                        id="osc2-level-value"
+                        class="knob-value"
                     >
+                        1.00
+                    </output>
                 </div>
 
-                <div class="control">
-                    <div class="control-header">
-                        <label for="osc2-detune">
-                            Detune
-                        </label>
-
-                        <output
-                            id="osc2-detune-value"
-                            class="value"
+                <div
+                    class="knob-control"
+                    data-knob
+                    data-input="osc2-detune"
+                    data-output="osc2-detune-value"
+                    style="margin-top: 18px;"
+                >
+                    <div class="knob">
+                        <svg
+                            class="knob-arc"
+                            viewBox="0 0 76 66"
+                            aria-hidden="true"
                         >
-                            0 cents
-                        </output>
+                            <circle
+                                class="knob-track"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+
+                            <circle
+                                class="knob-value-arc"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input
+                            id="osc2-detune"
+                            type="range"
+                            min="-100"
+                            max="100"
+                            step="1"
+                            value="0"
+                        >
                     </div>
 
-                    <input
-                        id="osc2-detune"
-                        type="range"
-                        min="-100"
-                        max="100"
-                        step="1"
-                        value="0"
+                    <div class="knob-name">
+                        Detune
+                    </div>
+
+                    <output
+                        id="osc2-detune-value"
+                        class="knob-value"
                     >
+                        0 ct
+                    </output>
                 </div>
             </section>
 
-            <section class="section">
+            <section class="module">
                 <h2>Filter</h2>
 
-                <div class="control">
-                    <div class="control-header">
-                        <label for="filter-cutoff">
-                            Cutoff
-                        </label>
-
-                        <output
-                            id="filter-cutoff-value"
-                            class="value"
+                <div
+                    class="knob-control"
+                    data-knob
+                    data-input="filter-cutoff"
+                    data-output="filter-cutoff-value"
+                >
+                    <div class="knob">
+                        <svg
+                            class="knob-arc"
+                            viewBox="0 0 76 66"
+                            aria-hidden="true"
                         >
-                            3.3 kHz
-                        </output>
+                            <circle
+                                class="knob-track"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+
+                            <circle
+                                class="knob-value-arc"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input
+                            id="filter-cutoff"
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.001"
+                            value="0.75"
+                        >
                     </div>
 
-                    <input
-                        id="filter-cutoff"
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.001"
-                        value="0.75"
+                    <div class="knob-name">
+                        Cutoff
+                    </div>
+
+                    <output
+                        id="filter-cutoff-value"
+                        class="knob-value"
                     >
+                        3.3 kHz
+                    </output>
                 </div>
             </section>
 
-            <section class="section">
-                <h2>Global LFO</h2>
+            <section class="module">
+                <h2>LFO</h2>
 
-                <div class="control">
-                    <div class="control-header">
-                        <label for="lfo-target">
-                            Target
-                        </label>
-                    </div>
+                <div class="field">
+                    <label
+                        class="field-label"
+                        for="lfo-target"
+                    >
+                        Target
+                    </label>
 
                     <select id="lfo-target">
                         <option value="0">Pitch</option>
                         <option value="1" selected>Vibrato</option>
                         <option value="2">Volume</option>
-                        <option value="3">Filter cutoff</option>
+                        <option value="3">Filter</option>
                     </select>
                 </div>
 
-                <div class="control">
-                    <div class="control-header">
-                        <label for="lfo-frequency">
-                            Rate
-                        </label>
-
-                        <output
-                            id="lfo-frequency-value"
-                            class="value"
+                <div
+                    class="knob-control"
+                    data-knob
+                    data-input="lfo-frequency"
+                    data-output="lfo-frequency-value"
+                >
+                    <div class="knob">
+                        <svg
+                            class="knob-arc"
+                            viewBox="0 0 76 66"
+                            aria-hidden="true"
                         >
-                            5.0 Hz
-                        </output>
+                            <circle
+                                class="knob-track"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+
+                            <circle
+                                class="knob-value-arc"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input
+                            id="lfo-frequency"
+                            type="range"
+                            min="0.1"
+                            max="20"
+                            step="0.1"
+                            value="5"
+                        >
                     </div>
 
-                    <input
-                        id="lfo-frequency"
-                        type="range"
-                        min="0.1"
-                        max="20"
-                        step="0.1"
-                        value="5"
+                    <div class="knob-name">
+                        Rate
+                    </div>
+
+                    <output
+                        id="lfo-frequency-value"
+                        class="knob-value"
                     >
+                        5.0 Hz
+                    </output>
                 </div>
 
-                <div class="control">
-                    <div class="control-header">
-                        <label for="lfo-amount">
-                            Amount
-                        </label>
-
-                        <output
-                            id="lfo-amount-value"
-                            class="value"
+                <div
+                    class="knob-control"
+                    data-knob
+                    data-input="lfo-amount"
+                    data-output="lfo-amount-value"
+                    style="margin-top: 18px;"
+                >
+                    <div class="knob">
+                        <svg
+                            class="knob-arc"
+                            viewBox="0 0 76 66"
+                            aria-hidden="true"
                         >
-                            1.0
-                        </output>
+                            <circle
+                                class="knob-track"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+
+                            <circle
+                                class="knob-value-arc"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input
+                            id="lfo-amount"
+                            type="range"
+                            min="0"
+                            max="12"
+                            step="0.1"
+                            value="1"
+                        >
                     </div>
 
-                    <input
-                        id="lfo-amount"
-                        type="range"
-                        min="0"
-                        max="12"
-                        step="0.1"
-                        value="1"
+                    <div class="knob-name">
+                        Amount
+                    </div>
+
+                    <output
+                        id="lfo-amount-value"
+                        class="knob-value"
                     >
+                        1.0
+                    </output>
                 </div>
             </section>
 
-            <section class="section">
+            <section class="module">
                 <h2>Output</h2>
 
-                <div class="control">
-                    <div class="control-header">
-                        <label for="master-volume">
-                            Master volume
-                        </label>
-
-                        <output
-                            id="master-volume-value"
-                            class="value"
+                <div
+                    class="knob-control"
+                    data-knob
+                    data-input="master-volume"
+                    data-output="master-volume-value"
+                >
+                    <div class="knob">
+                        <svg
+                            class="knob-arc"
+                            viewBox="0 0 76 66"
+                            aria-hidden="true"
                         >
-                            0.50
-                        </output>
+                            <circle
+                                class="knob-track"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+
+                            <circle
+                                class="knob-value-arc"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input
+                            id="master-volume"
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value="0.5"
+                        >
                     </div>
 
-                    <input
-                        id="master-volume"
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value="0.5"
+                    <div class="knob-name">
+                        Volume
+                    </div>
+
+                    <output
+                        id="master-volume-value"
+                        class="knob-value"
                     >
+                        0.50
+                    </output>
                 </div>
             </section>
         </div>
 
-        <section class="keyboard-help">
-            <strong>Keyboard</strong>
+        <div class="keyboard-info">
+            A W S E D F T G Y H U J
 
-            <div>
-                <code>A</code>
-                <code>W</code>
-                <code>S</code>
-                <code>E</code>
-                <code>D</code>
-                <code>F</code>
-                <code>T</code>
-                <code>G</code>
-                <code>Y</code>
-                <code>H</code>
-                <code>U</code>
-                <code>J</code>
+            <div id="note-display">
+                ---
             </div>
-        </section>
+        </div>
     </main>
 
     <script type="module">
-    const audio = new AudioContext();
+        const audio =
+            new AudioContext();
 
-    const wasmResponse = await fetch(
-        "../pkg/versasha_com_bg.wasm"
-    );
-
-    if (!wasmResponse.ok) {
-        throw new Error(
-            `Failed to fetch WASM: ${wasmResponse.status}`
+        const wasmResponse = await fetch(
+            "../pkg/versasha_com_bg.wasm"
         );
-    }
 
-    const wasmBytes =
-        await wasmResponse.arrayBuffer();
-
-    const wasmModule =
-        await WebAssembly.compile(wasmBytes);
-
-    await audio.audioWorklet.addModule(
-        `./synth-worklet.js?v=${Date.now()}`
-    );
-
-    const node = new AudioWorkletNode(
-        audio,
-        "synth-processor",
-        {
-            numberOfInputs: 0,
-            numberOfOutputs: 1,
-            outputChannelCount: [2],
-
-            processorOptions: {
-                wasmModule
-            }
+        if (!wasmResponse.ok) {
+            throw new Error(
+                `Failed to fetch WASM: ${wasmResponse.status}`
+            );
         }
-    );
 
-    node.connect(audio.destination);
+        const wasmBytes =
+            await wasmResponse.arrayBuffer();
+
+        const wasmModule =
+            await WebAssembly.compile(wasmBytes);
+
+        await audio.audioWorklet.addModule(
+            `./synth-worklet.js?v=${Date.now()}`
+        );
+
+        const node =
+            new AudioWorkletNode(
+                audio,
+                "synth-processor",
+                {
+                    numberOfInputs: 0,
+                    numberOfOutputs: 1,
+                    outputChannelCount: [2],
+
+                    processorOptions: {
+                        wasmModule
+                    }
+                }
+            );
 
         node.connect(audio.destination);
+
+        node.port.onmessage = event => {
+            if (
+                event.data.type === "error" ||
+                event.data.type === "warning"
+            ) {
+                console.error(
+                    "[Synth worklet]",
+                    event.data.message
+                );
+            }
+        };
 
         const startButton =
             document.getElementById("start");
 
         const status =
             document.getElementById("status");
+
+        const noteDisplay =
+            document.getElementById("note-display");
+
+        async function startAudio() {
+            await audio.resume();
+
+            startButton.disabled = true;
+            startButton.textContent = "Running";
+            status.textContent = "Audio running";
+        }
+
+        startButton.addEventListener(
+            "click",
+            startAudio
+        );
 
         function send(type, value) {
             node.port.postMessage({
@@ -523,26 +946,27 @@
             });
         }
 
-        async function startAudio() {
-            await audio.resume();
-
-            startButton.disabled = true;
-            startButton.textContent = "Audio running";
-
-            status.textContent = "Audio running";
-            status.classList.add("running");
+        function clamp(value, minimum, maximum) {
+            return Math.min(
+                Math.max(value, minimum),
+                maximum
+            );
         }
 
-        startButton.addEventListener(
-            "click",
-            startAudio
-        );
+        function decimalPlaces(step) {
+            const text = String(step);
 
-        function bindRange({
+            return text.includes(".")
+                ? text.split(".")[1].length
+                : 0;
+        }
+
+        function initializeKnob({
             inputId,
             outputId,
             format,
-            messageType
+            messageType,
+            transform = value => value
         }) {
             const input =
                 document.getElementById(inputId);
@@ -550,82 +974,161 @@
             const output =
                 document.getElementById(outputId);
 
-            function apply() {
-                const value =
-                    Number(input.value);
+            const wrapper =
+                input.closest("[data-knob]");
+
+            const knob =
+                wrapper.querySelector(".knob");
+
+            const minimum =
+                Number(input.min);
+
+            const maximum =
+                Number(input.max);
+
+            const step =
+                Number(input.step || 1);
+
+            const precision =
+                decimalPlaces(step);
+
+            let dragging = false;
+            let previousY = 0;
+
+            function setValue(value) {
+                const snapped =
+                    Math.round(
+                        (value - minimum) / step
+                    ) * step + minimum;
+
+                const clamped =
+                    clamp(
+                        snapped,
+                        minimum,
+                        maximum
+                    );
+
+                input.value =
+                    clamped.toFixed(precision);
+
+                const normalized =
+                    (clamped - minimum) /
+                    (maximum - minimum);
+
+                wrapper.style.setProperty(
+                    "--normalized",
+                    normalized
+                );
 
                 output.value =
-                    format(value);
+                    format(clamped);
 
                 send(
                     messageType,
-                    value
+                    transform(clamped)
                 );
             }
 
-            input.addEventListener(
-                "input",
-                apply
+            knob.addEventListener(
+                "pointerdown",
+                event => {
+                    dragging = true;
+                    previousY = event.clientY;
+
+                    knob.setPointerCapture(
+                        event.pointerId
+                    );
+                }
             );
 
-            apply();
+            knob.addEventListener(
+                "pointermove",
+                event => {
+                    if (!dragging) {
+                        return;
+                    }
+
+                    const delta =
+                        previousY - event.clientY;
+
+                    previousY =
+                        event.clientY;
+
+                    const range =
+                        maximum - minimum;
+
+                    const sensitivity =
+                        event.shiftKey
+                            ? 0.0008
+                            : 0.004;
+
+                    setValue(
+                        Number(input.value) +
+                        delta *
+                        range *
+                        sensitivity
+                    );
+                }
+            );
+
+            knob.addEventListener(
+                "pointerup",
+                event => {
+                    dragging = false;
+
+                    knob.releasePointerCapture(
+                        event.pointerId
+                    );
+                }
+            );
+
+            knob.addEventListener(
+                "pointercancel",
+                () => {
+                    dragging = false;
+                }
+            );
+
+            knob.addEventListener(
+                "wheel",
+                event => {
+                    event.preventDefault();
+
+                    const direction =
+                        event.deltaY > 0
+                            ? -1
+                            : 1;
+
+                    const multiplier =
+                        event.shiftKey
+                            ? 0.1
+                            : 1;
+
+                    setValue(
+                        Number(input.value) +
+                        direction *
+                        step *
+                        multiplier
+                    );
+                },
+                {
+                    passive: false
+                }
+            );
+
+            knob.addEventListener(
+                "dblclick",
+                () => {
+                    setValue(
+                        Number(input.defaultValue)
+                    );
+                }
+            );
+
+            setValue(
+                Number(input.value)
+            );
         }
-
-        bindRange({
-            inputId: "osc1-level",
-            outputId: "osc1-level-value",
-            format: value => value.toFixed(2),
-            messageType: "osc1-level"
-        });
-
-        bindRange({
-            inputId: "osc2-level",
-            outputId: "osc2-level-value",
-            format: value => value.toFixed(2),
-            messageType: "osc2-level"
-        });
-
-        bindRange({
-            inputId: "osc2-detune",
-            outputId: "osc2-detune-value",
-            format: value =>
-                `${value > 0 ? "+" : ""}${value} cents`,
-            messageType: "osc2-detune"
-        });
-
-        bindRange({
-            inputId: "lfo-frequency",
-            outputId: "lfo-frequency-value",
-            format: value =>
-                `${value.toFixed(1)} Hz`,
-            messageType: "lfo-frequency"
-        });
-
-        bindRange({
-            inputId: "lfo-amount",
-            outputId: "lfo-amount-value",
-            format: value =>
-                value.toFixed(1),
-            messageType: "lfo-amount"
-        });
-
-        bindRange({
-            inputId: "master-volume",
-            outputId: "master-volume-value",
-            format: value =>
-                value.toFixed(2),
-            messageType: "master-volume"
-        });
-
-        const cutoffInput =
-            document.getElementById(
-                "filter-cutoff"
-            );
-
-        const cutoffOutput =
-            document.getElementById(
-                "filter-cutoff-value"
-            );
 
         function logarithmicFrequency(
             position,
@@ -639,133 +1142,252 @@
                 );
         }
 
-        function updateCutoff() {
-            const position =
-                Number(cutoffInput.value);
+        initializeKnob({
+            inputId: "osc1-level",
+            outputId: "osc1-level-value",
+            format: value => value.toFixed(2),
+            messageType: "osc1-level"
+        });
 
-            const frequency =
-                logarithmicFrequency(position);
+        initializeKnob({
+            inputId: "osc2-level",
+            outputId: "osc2-level-value",
+            format: value => value.toFixed(2),
+            messageType: "osc2-level"
+        });
 
-            cutoffOutput.value =
-                frequency >= 1000
+        initializeKnob({
+            inputId: "osc2-detune",
+            outputId: "osc2-detune-value",
+            format: value =>
+                `${value > 0 ? "+" : ""}${Math.round(value)} ct`,
+            messageType: "osc2-detune"
+        });
+
+        initializeKnob({
+            inputId: "filter-cutoff",
+            outputId: "filter-cutoff-value",
+            format: position => {
+                const frequency =
+                    logarithmicFrequency(position);
+
+                return frequency >= 1000
                     ? `${(frequency / 1000).toFixed(1)} kHz`
                     : `${Math.round(frequency)} Hz`;
+            },
+            messageType: "filter-cutoff",
+            transform: logarithmicFrequency
+        });
 
-            send(
-                "filter-cutoff",
-                frequency
-            );
-        }
+        initializeKnob({
+            inputId: "lfo-frequency",
+            outputId: "lfo-frequency-value",
+            format: value =>
+                `${value.toFixed(1)} Hz`,
+            messageType: "lfo-frequency"
+        });
 
-        cutoffInput.addEventListener(
-            "input",
-            updateCutoff
-        );
+        initializeKnob({
+            inputId: "lfo-amount",
+            outputId: "lfo-amount-value",
+            format: value =>
+                value.toFixed(1),
+            messageType: "lfo-amount"
+        });
 
-        updateCutoff();
+        initializeKnob({
+            inputId: "master-volume",
+            outputId: "master-volume-value",
+            format: value =>
+                value.toFixed(2),
+            messageType: "master-volume"
+        });
 
         const osc1Waveform =
             document.getElementById(
                 "osc1-waveform"
             );
 
-        osc1Waveform.addEventListener(
-            "change",
-            () => {
-                send(
-                    "osc1-waveform",
-                    Number(osc1Waveform.value)
-                );
-            }
-        );
-
         const osc2Waveform =
             document.getElementById(
                 "osc2-waveform"
             );
-
-        osc2Waveform.addEventListener(
-            "change",
-            () => {
-                send(
-                    "osc2-waveform",
-                    Number(osc2Waveform.value)
-                );
-            }
-        );
 
         const lfoTarget =
             document.getElementById(
                 "lfo-target"
             );
 
-        lfoTarget.addEventListener(
-            "change",
-            () => {
-                send(
-                    "lfo-target",
-                    Number(lfoTarget.value)
-                );
+        function bindSelect(
+            select,
+            messageType
+        ) {
+            select.addEventListener(
+                "change",
+                () => {
+                    send(
+                        messageType,
+                        Number(select.value)
+                    );
+
+                    select.blur();
+                }
+            );
+
+            select.addEventListener(
+                "pointerup",
+                () => {
+                    queueMicrotask(
+                        () => select.blur()
+                    );
+                }
+            );
+
+            send(
+                messageType,
+                Number(select.value)
+            );
+        }
+
+        bindSelect(
+            osc1Waveform,
+            "osc1-waveform"
+        );
+
+        bindSelect(
+            osc2Waveform,
+            "osc2-waveform"
+        );
+
+        bindSelect(
+            lfoTarget,
+            "lfo-target"
+        );
+
+        const notes = {
+            a: {
+                frequency: 261.63,
+                name: "C4"
+            },
+
+            w: {
+                frequency: 277.18,
+                name: "C#4"
+            },
+
+            s: {
+                frequency: 293.66,
+                name: "D4"
+            },
+
+            e: {
+                frequency: 311.13,
+                name: "D#4"
+            },
+
+            d: {
+                frequency: 329.63,
+                name: "E4"
+            },
+
+            f: {
+                frequency: 349.23,
+                name: "F4"
+            },
+
+            t: {
+                frequency: 369.99,
+                name: "F#4"
+            },
+
+            g: {
+                frequency: 392.0,
+                name: "G4"
+            },
+
+            y: {
+                frequency: 415.3,
+                name: "G#4"
+            },
+
+            h: {
+                frequency: 440.0,
+                name: "A4"
+            },
+
+            u: {
+                frequency: 466.16,
+                name: "A#4"
+            },
+
+            j: {
+                frequency: 493.88,
+                name: "B4"
             }
-        );
-
-        send(
-            "osc1-waveform",
-            Number(osc1Waveform.value)
-        );
-
-        send(
-            "osc2-waveform",
-            Number(osc2Waveform.value)
-        );
-
-        send(
-            "lfo-target",
-            Number(lfoTarget.value)
-        );
-
-        const keys = {
-            a: 261.63,
-            w: 277.18,
-            s: 293.66,
-            e: 311.13,
-            d: 329.63,
-            f: 349.23,
-            t: 369.99,
-            g: 392.00,
-            y: 415.30,
-            h: 440.00,
-            u: 466.16,
-            j: 493.88
         };
 
         const heldKeys =
             new Set();
 
+        async function pressKey(key) {
+            const note = notes[key];
+
+            if (
+                !note ||
+                heldKeys.has(key)
+            ) {
+                return;
+            }
+
+            heldKeys.add(key);
+
+            await startAudio();
+
+            sendNoteOn(note.frequency);
+
+            noteDisplay.textContent =
+                `${note.name} — ${note.frequency.toFixed(2)} Hz`;
+        }
+
+        function releaseKey(key) {
+            const note = notes[key];
+
+            if (
+                !note ||
+                !heldKeys.has(key)
+            ) {
+                return;
+            }
+
+            heldKeys.delete(key);
+
+            sendNoteOff(note.frequency);
+
+            const remaining =
+                Array.from(heldKeys).at(-1);
+
+            noteDisplay.textContent =
+                remaining
+                    ? `${notes[remaining].name} — ${notes[remaining].frequency.toFixed(2)} Hz`
+                    : "---";
+        }
+
         window.addEventListener(
             "keydown",
-            async event => {
+            event => {
                 const key =
                     event.key.toLowerCase();
 
-                const frequency =
-                    keys[key];
-
-                if (
-                    !frequency ||
-                    heldKeys.has(key)
-                ) {
+                if (!notes[key]) {
                     return;
                 }
 
                 event.preventDefault();
+                event.stopPropagation();
 
-                heldKeys.add(key);
-
-                await startAudio();
-
-                sendNoteOn(frequency);
-            }
+                pressKey(key);
+            },
+            true
         );
 
         window.addEventListener(
@@ -774,29 +1396,26 @@
                 const key =
                     event.key.toLowerCase();
 
-                const frequency =
-                    keys[key];
-
-                if (!frequency) {
+                if (!notes[key]) {
                     return;
                 }
 
                 event.preventDefault();
+                event.stopPropagation();
 
-                heldKeys.delete(key);
-
-                sendNoteOff(frequency);
-            }
+                releaseKey(key);
+            },
+            true
         );
 
         window.addEventListener(
             "blur",
             () => {
-                for (const key of heldKeys) {
-                    sendNoteOff(keys[key]);
+                for (const key of [
+                    ...heldKeys
+                ]) {
+                    releaseKey(key);
                 }
-
-                heldKeys.clear();
             }
         );
     </script>
