@@ -1,6 +1,8 @@
+use crate::dsp::fx::delay::Delay;
+use crate::dsp::fx::FxRoute;
 use crate::dsp::lfo::Lfo;
 use crate::dsp::modulation::{ModulationGenerator, ModulationTarget};
-use crate::dsp::types::{Sample, SampleRate};
+use crate::dsp::types::{DryWet, Sample, SampleRate, Time};
 use crate::dsp::voice::Voice;
 use crate::dsp::waveform::Waveform;
 
@@ -9,6 +11,8 @@ pub struct Synth {
     lfos: Vec<Lfo>,
     sample_rate: SampleRate,
     master_volume: Sample,
+    master_delay: Delay,
+    delay_route: FxRoute,
 }
 
 impl Synth {
@@ -18,6 +22,8 @@ impl Synth {
             lfos: vec![Lfo::new(rate)],
             sample_rate: rate,
             master_volume: 1.0,
+            master_delay: Delay::new(rate),
+            delay_route: FxRoute::Master,
         };
 
         for _ in 0..voices {
@@ -77,6 +83,42 @@ impl Synth {
         self.master_volume = volume.clamp(0.0, 1.0);
     }
 
+    pub fn set_delay_route(&mut self, route: FxRoute) {
+        self.delay_route = route;
+
+        for voice in self.voices.iter_mut() {
+            voice.set_delay_route(route);
+        }
+    }
+
+    pub fn delay_route(&self) -> FxRoute {
+        self.delay_route
+    }
+
+    pub fn set_delay_time(&mut self, time: Time) {
+        self.master_delay.set_time(time);
+
+        for voice in self.voices.iter_mut() {
+            voice.set_delay_time(time);
+        }
+    }
+
+    pub fn set_delay_feedback(&mut self, feedback: Sample) {
+        self.master_delay.set_feedback(feedback);
+
+        for voice in self.voices.iter_mut() {
+            voice.set_delay_feedback(feedback);
+        }
+    }
+
+    pub fn set_delay_mix(&mut self, mix: DryWet) {
+        self.master_delay.set_mix(mix);
+
+        for voice in self.voices.iter_mut() {
+            voice.set_delay_mix(mix);
+        }
+    }
+
     pub fn voice_count(&self) -> usize {
         self.voices.len()
     }
@@ -105,6 +147,12 @@ impl Synth {
 
             output += voice.next_sample();
         }
+
+        let output = if self.delay_route == FxRoute::Master {
+            self.master_delay.process(output)
+        } else {
+            output
+        };
 
         (output * self.master_volume).clamp(-1.0, 1.0)
     }
@@ -276,6 +324,79 @@ mod tests {
         synth.set_master_volume(2.0);
 
         assert_eq!(synth.master_volume, 1.0);
+    }
+
+    #[test]
+    fn delay_defaults_to_master_route() {
+        let synth = Synth::new(48_000.0, 1);
+
+        assert_eq!(synth.delay_route(), FxRoute::Master);
+    }
+
+    #[test]
+    fn delay_route_propagates_to_voices() {
+        let mut synth = Synth::new(48_000.0, 4);
+
+        synth.set_delay_route(FxRoute::Osc1);
+
+        assert_eq!(synth.delay_route(), FxRoute::Osc1);
+        assert!(synth
+            .voices
+            .iter()
+            .all(|voice| voice.delay_route() == FxRoute::Osc1));
+    }
+
+    #[test]
+    fn delay_params_propagate_to_voices() {
+        let mut synth = Synth::new(48_000.0, 2);
+
+        synth.set_delay_time(0.5);
+        synth.set_delay_feedback(0.4);
+        synth.set_delay_mix(0.6);
+
+        for voice in synth.voices.iter() {
+            assert_eq!(voice.delay_time(), 0.5);
+            assert_eq!(voice.delay_feedback(), 0.4);
+            assert_eq!(voice.delay_mix(), 0.6);
+        }
+    }
+
+    #[test]
+    fn master_route_delays_summed_output() {
+        let mut synth = Synth::new(48_000.0, 1);
+
+        // fully wet with an empty buffer: the master bus should be silent
+        // until the delay time has elapsed
+        synth.set_delay_time(0.001);
+        synth.set_delay_feedback(0.0);
+        synth.set_delay_mix(1.0);
+        synth.set_delay_route(FxRoute::Master);
+
+        synth.note_on(440.0);
+
+        let delay_samples = (48_000.0 * 0.001) as usize;
+
+        for _ in 0..delay_samples {
+            assert_eq!(synth.next_sample(), 0.0);
+        }
+    }
+
+    #[test]
+    fn non_master_route_bypasses_the_master_bus_delay() {
+        let mut synth = Synth::new(48_000.0, 1);
+
+        // same fully-wet settings, but routed to osc1: the master bus itself
+        // should be untouched, so osc2 keeps the voice audible immediately
+        synth.set_delay_time(0.001);
+        synth.set_delay_feedback(0.0);
+        synth.set_delay_mix(1.0);
+        synth.set_delay_route(FxRoute::Osc1);
+
+        synth.note_on(440.0);
+
+        synth.next_sample();
+
+        assert_ne!(synth.next_sample(), 0.0);
     }
 
     #[test]

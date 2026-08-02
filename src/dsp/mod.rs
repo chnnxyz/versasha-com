@@ -1,5 +1,6 @@
 pub mod envelope;
 pub mod filter;
+pub mod fx;
 pub mod lfo;
 pub mod mixer;
 pub mod modulation;

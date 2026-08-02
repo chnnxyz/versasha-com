@@ -102,6 +102,30 @@ class SynthProcessor extends AudioWorkletProcessor {
                         );
                         break;
 
+                    case "delay-route":
+                        this.synth.set_delay_route(
+                            Number(message.value)
+                        );
+                        break;
+
+                    case "delay-time":
+                        this.synth.set_delay_time(
+                            Number(message.value)
+                        );
+                        break;
+
+                    case "delay-feedback":
+                        this.synth.set_delay_feedback(
+                            Number(message.value)
+                        );
+                        break;
+
+                    case "delay-mix":
+                        this.synth.set_delay_mix(
+                            Number(message.value)
+                        );
+                        break;
+
                     default:
                         this.port.postMessage({
                             type: "warning",

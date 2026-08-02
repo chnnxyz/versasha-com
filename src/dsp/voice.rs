@@ -1,5 +1,7 @@
 use crate::dsp::envelope::EnvelopeState;
 use crate::dsp::filter::LowPassFilter;
+use crate::dsp::fx::delay::Delay;
+use crate::dsp::fx::FxRoute;
 use crate::dsp::mixer::Mixer;
 use crate::dsp::modulation::ModulationTarget;
 use crate::dsp::modulation_matrix::ModulationMatrix;
@@ -7,7 +9,7 @@ use crate::params::voice_params::VoiceParams;
 
 use super::envelope::Envelope;
 use super::oscillator::Oscillator;
-use super::types::{Frequency, Sample, SampleRate};
+use super::types::{DryWet, Frequency, Sample, SampleRate, Time};
 
 pub struct Voice {
     osc1: Oscillator,
@@ -26,6 +28,10 @@ pub struct Voice {
     params: VoiceParams,
 
     filter: LowPassFilter,
+
+    delay: Delay,
+
+    delay_route: FxRoute,
 }
 
 impl Voice {
@@ -48,6 +54,10 @@ impl Voice {
             params: VoiceParams::default(),
 
             filter: LowPassFilter::new(rate),
+
+            delay: Delay::new(rate),
+
+            delay_route: FxRoute::Master,
         }
     }
 
@@ -119,9 +129,15 @@ impl Voice {
 
         self.osc2.set_freq(osc2_frequency);
 
-        let osc1 = self.osc1.next_sample() * self.params.osc1.level;
+        let mut osc1 = self.osc1.next_sample() * self.params.osc1.level;
 
-        let osc2 = self.osc2.next_sample() * self.params.osc2.level;
+        let mut osc2 = self.osc2.next_sample() * self.params.osc2.level;
+
+        match self.delay_route {
+            FxRoute::Osc1 => osc1 = self.delay.process(osc1),
+            FxRoute::Osc2 => osc2 = self.delay.process(osc2),
+            FxRoute::Master => {}
+        }
 
         (osc1, osc2)
     }
@@ -152,6 +168,46 @@ impl Voice {
 
     pub fn filter_cutoff(&self) -> Frequency {
         self.filter.cutoff()
+    }
+
+    // =========================
+    // Delay
+    // =========================
+
+    pub fn set_delay_route(&mut self, route: FxRoute) {
+        self.delay_route = route;
+    }
+
+    pub fn delay_route(&self) -> FxRoute {
+        self.delay_route
+    }
+
+    pub fn set_delay_time(&mut self, time: Time) {
+        self.delay.set_time(time);
+    }
+
+    pub fn delay_time(&self) -> Time {
+        self.delay.time()
+    }
+
+    pub fn set_delay_feedback(&mut self, feedback: Sample) {
+        self.delay.set_feedback(feedback);
+    }
+
+    pub fn delay_feedback(&self) -> Sample {
+        self.delay.feedback()
+    }
+
+    pub fn set_delay_mix(&mut self, mix: DryWet) {
+        self.delay.set_mix(mix);
+    }
+
+    pub fn delay_mix(&self) -> DryWet {
+        self.delay.mix()
+    }
+
+    pub fn reset_delay(&mut self) {
+        self.delay.reset();
     }
 
     // =========================
@@ -423,6 +479,61 @@ mod tests {
         voice.set_filter_cutoff(800.0);
 
         assert_eq!(voice.filter_cutoff(), 800.0);
+    }
+
+    #[test]
+    fn delay_defaults_to_master_route() {
+        let voice = Voice::new(48_000.0);
+
+        assert_eq!(voice.delay_route(), FxRoute::Master);
+    }
+
+    #[test]
+    fn delay_route_can_be_changed() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.set_delay_route(FxRoute::Osc1);
+
+        assert_eq!(voice.delay_route(), FxRoute::Osc1);
+    }
+
+    #[test]
+    fn delay_params_round_trip() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.set_delay_time(0.4);
+        voice.set_delay_feedback(0.6);
+        voice.set_delay_mix(0.7);
+
+        assert_eq!(voice.delay_time(), 0.4);
+        assert_eq!(voice.delay_feedback(), 0.6);
+        assert_eq!(voice.delay_mix(), 0.7);
+    }
+
+    #[test]
+    fn master_route_does_not_apply_delay_pre_mix() {
+        let mut osc1_voice = Voice::new(48_000.0);
+        let mut master_voice = Voice::new(48_000.0);
+
+        for voice in [&mut osc1_voice, &mut master_voice] {
+            voice.set_delay_time(0.4);
+            voice.set_delay_feedback(0.9);
+            voice.set_delay_mix(1.0);
+            voice.note_on(440.0);
+        }
+
+        osc1_voice.set_delay_route(FxRoute::Osc1);
+        master_voice.set_delay_route(FxRoute::Master);
+
+        // discard the first sample: phase 0 produces silence for a sine wave,
+        // which would make both routes look identical before the delay has anything to echo
+        osc1_voice.oscillator_samples();
+        master_voice.oscillator_samples();
+
+        assert_ne!(
+            osc1_voice.oscillator_samples(),
+            master_voice.oscillator_samples()
+        );
     }
 
     #[test]

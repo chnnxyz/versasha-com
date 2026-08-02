@@ -135,7 +135,7 @@
         .modules {
             display: grid;
             grid-template-columns:
-                repeat(5, minmax(0, 1fr));
+                repeat(6, minmax(0, 1fr));
             gap: 20px;
         }
 
@@ -781,6 +781,195 @@
             </section>
 
             <section class="module">
+                <h2>Delay</h2>
+
+                <div class="field">
+                    <label
+                        class="field-label"
+                        for="delay-route"
+                    >
+                        Route
+                    </label>
+
+                    <select id="delay-route">
+                        <option value="0">Osc 1</option>
+                        <option value="1">Osc 2</option>
+                        <option value="2" selected>Master</option>
+                    </select>
+                </div>
+
+                <div
+                    class="knob-control"
+                    data-knob
+                    data-input="delay-time"
+                    data-output="delay-time-value"
+                >
+                    <div class="knob">
+                        <svg
+                            class="knob-arc"
+                            viewBox="0 0 76 66"
+                            aria-hidden="true"
+                        >
+                            <circle
+                                class="knob-track"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+
+                            <circle
+                                class="knob-value-arc"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input
+                            id="delay-time"
+                            type="range"
+                            min="0"
+                            max="2"
+                            step="0.001"
+                            value="0.3"
+                        >
+                    </div>
+
+                    <div class="knob-name">
+                        Time
+                    </div>
+
+                    <output
+                        id="delay-time-value"
+                        class="knob-value"
+                    >
+                        300 ms
+                    </output>
+                </div>
+
+                <div
+                    class="knob-control"
+                    data-knob
+                    data-input="delay-feedback"
+                    data-output="delay-feedback-value"
+                    style="margin-top: 18px;"
+                >
+                    <div class="knob">
+                        <svg
+                            class="knob-arc"
+                            viewBox="0 0 76 66"
+                            aria-hidden="true"
+                        >
+                            <circle
+                                class="knob-track"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+
+                            <circle
+                                class="knob-value-arc"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input
+                            id="delay-feedback"
+                            type="range"
+                            min="0"
+                            max="0.98"
+                            step="0.01"
+                            value="0.3"
+                        >
+                    </div>
+
+                    <div class="knob-name">
+                        Feedback
+                    </div>
+
+                    <output
+                        id="delay-feedback-value"
+                        class="knob-value"
+                    >
+                        0.30
+                    </output>
+                </div>
+
+                <div
+                    class="knob-control"
+                    data-knob
+                    data-input="delay-mix"
+                    data-output="delay-mix-value"
+                    style="margin-top: 18px;"
+                >
+                    <div class="knob">
+                        <svg
+                            class="knob-arc"
+                            viewBox="0 0 76 66"
+                            aria-hidden="true"
+                        >
+                            <circle
+                                class="knob-track"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+
+                            <circle
+                                class="knob-value-arc"
+                                cx="38"
+                                cy="38"
+                                r="25"
+                                pathLength="270"
+                                stroke-dasharray="270 90"
+                            ></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input
+                            id="delay-mix"
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value="0.5"
+                        >
+                    </div>
+
+                    <div class="knob-name">
+                        Mix
+                    </div>
+
+                    <output
+                        id="delay-mix-value"
+                        class="knob-value"
+                    >
+                        0.50
+                    </output>
+                </div>
+            </section>
+
+            <section class="module">
                 <h2>Output</h2>
 
                 <div
@@ -1203,6 +1392,30 @@
             messageType: "master-volume"
         });
 
+        initializeKnob({
+            inputId: "delay-time",
+            outputId: "delay-time-value",
+            format: value =>
+                `${Math.round(value * 1000)} ms`,
+            messageType: "delay-time"
+        });
+
+        initializeKnob({
+            inputId: "delay-feedback",
+            outputId: "delay-feedback-value",
+            format: value =>
+                value.toFixed(2),
+            messageType: "delay-feedback"
+        });
+
+        initializeKnob({
+            inputId: "delay-mix",
+            outputId: "delay-mix-value",
+            format: value =>
+                value.toFixed(2),
+            messageType: "delay-mix"
+        });
+
         const osc1Waveform =
             document.getElementById(
                 "osc1-waveform"
@@ -1216,6 +1429,11 @@
         const lfoTarget =
             document.getElementById(
                 "lfo-target"
+            );
+
+        const delayRoute =
+            document.getElementById(
+                "delay-route"
             );
 
         function bindSelect(
@@ -1262,6 +1480,11 @@
         bindSelect(
             lfoTarget,
             "lfo-target"
+        );
+
+        bindSelect(
+            delayRoute,
+            "delay-route"
         );
 
         const notes = {

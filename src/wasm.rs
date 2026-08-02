@@ -1,5 +1,6 @@
 use wasm_bindgen::prelude::*;
 
+use crate::dsp::fx::FxRoute;
 use crate::dsp::waveform::Waveform;
 use crate::engine::synth::Synth;
 
@@ -93,5 +94,26 @@ impl SynthEngine {
             3 => Waveform::Triangle,
             _ => Waveform::Sine,
         });
+    }
+
+    pub fn set_delay_route(&mut self, route: u32) {
+        self.synth.set_delay_route(match route {
+            0 => FxRoute::Osc1,
+            1 => FxRoute::Osc2,
+            2 => FxRoute::Master,
+            _ => FxRoute::Master,
+        });
+    }
+
+    pub fn set_delay_time(&mut self, seconds: f32) {
+        self.synth.set_delay_time(seconds);
+    }
+
+    pub fn set_delay_feedback(&mut self, feedback: f32) {
+        self.synth.set_delay_feedback(feedback);
+    }
+
+    pub fn set_delay_mix(&mut self, mix: f32) {
+        self.synth.set_delay_mix(mix);
     }
 }
