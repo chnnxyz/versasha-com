@@ -1,35 +1,49 @@
-use crate::dsp::types::Sample;
+use super::types::Sample;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ModulationTarget {
     Pitch,
-    Volume,
     Vibrato,
+    Volume,
+    FilterCutoff,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ModulationSource {
+    Lfo,
+    Envelope,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Modulation {
+    source: ModulationSource,
     target: ModulationTarget,
-    value: u8,
+    value: Sample,
 }
 
 impl Modulation {
-    pub fn new(target: ModulationTarget, value: u8) -> Self {
+    pub fn new(source: ModulationSource, target: ModulationTarget, value: Sample) -> Self {
         Self {
-            target: target,
-            value: value,
+            source,
+            target,
+            value,
         }
+    }
+
+    pub fn source(&self) -> ModulationSource {
+        self.source
     }
 
     pub fn target(&self) -> ModulationTarget {
         self.target
     }
 
-    pub fn value(&self) -> u8 {
+    pub fn value(&self) -> Sample {
         self.value
     }
+}
 
-    pub fn normalized(&self) -> Sample {
-        self.value as Sample / 255.0
-    }
+pub trait ModulationGenerator {
+    fn next_modulation(&mut self) -> Modulation;
+    fn reset(&mut self);
 }

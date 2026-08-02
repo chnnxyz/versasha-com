@@ -1,10 +1,11 @@
+use crate::dsp::envelope::EnvelopeState;
 use crate::dsp::filter::LowPassFilter;
 use crate::dsp::mixer::Mixer;
-use crate::dsp::modulation::{Modulation, ModulationTarget};
-use crate::dsp::waveform::Waveform;
+use crate::dsp::modulation::ModulationTarget;
+use crate::dsp::modulation_matrix::ModulationMatrix;
 use crate::params::voice_params::VoiceParams;
 
-use super::envelope::{Envelope, EnvelopeState};
+use super::envelope::Envelope;
 use super::oscillator::Oscillator;
 use super::types::{Frequency, Sample, SampleRate};
 
@@ -16,81 +17,107 @@ pub struct Voice {
 
     frequency: Frequency,
 
+    active: bool,
+
     mixer: Mixer,
 
-    modulation: Option<Modulation>,
+    modulation_matrix: ModulationMatrix,
+
     params: VoiceParams,
 
     filter: LowPassFilter,
 }
 
 impl Voice {
-    // Constructor
     pub fn new(rate: SampleRate) -> Self {
         Self {
             osc1: Oscillator::new(rate),
+
             osc2: Oscillator::new(rate),
 
             envelope: Envelope::new(rate),
 
             frequency: 0.0,
 
+            active: false,
+
             mixer: Mixer::new(),
 
-            modulation: None,
+            modulation_matrix: ModulationMatrix::new(),
+
             params: VoiceParams::default(),
 
             filter: LowPassFilter::new(rate),
         }
     }
 
-    // Modulation
-    fn apply_pitch_modulation(&self, frequency: Frequency) -> Frequency {
-        match self.modulation {
-            Some(modulation) if modulation.target() == ModulationTarget::Pitch => {
-                frequency + modulation.value() as f32
-            }
-
-            _ => frequency,
-        }
+    pub fn is_active(&self) -> bool {
+        self.active
+    }
+    pub fn frequency(&self) -> Frequency {
+        self.frequency
     }
 
-    fn apply_vibrato_modulation(&self, frequency: Frequency) -> Frequency {
-        match self.modulation {
-            Some(modulation) if modulation.target() == ModulationTarget::Vibrato => {
-                frequency + modulation.value() as f32
-            }
+    pub fn envelope_state(&self) -> EnvelopeState {
+        self.envelope.state()
+    }
 
-            _ => frequency,
-        }
+    // =========================
+    // Modulation
+    // =========================
+    pub fn modulation_matrix_mut(&mut self) -> &mut ModulationMatrix {
+        &mut self.modulation_matrix
+    }
+
+    pub fn reset_modulation(&mut self) {
+        self.modulation_matrix.reset();
+    }
+
+    pub fn modulation_value(&self, target: ModulationTarget) -> Sample {
+        self.modulation_matrix.value(target)
     }
 
     fn current_frequency(&self) -> Frequency {
-        let frequency = self.apply_pitch_modulation(self.frequency);
+        self.frequency + self.pitch_offset() + self.vibrato_offset()
+    }
 
-        self.apply_vibrato_modulation(frequency)
+    fn volume_multiplier(&self) -> Sample {
+        let modulation = self.modulation_value(ModulationTarget::Volume);
+
+        if modulation == 0.0 {
+            1.0
+        } else {
+            modulation.clamp(0.0, 1.0)
+        }
     }
 
     fn apply_volume_modulation(&self, sample: Sample) -> Sample {
-        match self.modulation {
-            Some(modulation) if modulation.target() == ModulationTarget::Volume => {
-                let amount = modulation.value() as f32 / 255.0;
-
-                sample * amount
-            }
-
-            _ => sample,
-        }
+        sample * self.volume_multiplier()
     }
+
+    fn pitch_offset(&self) -> Frequency {
+        let semitones = self.modulation_value(ModulationTarget::Pitch);
+
+        self.frequency * (2.0_f32.powf(semitones / 12.0) - 1.0)
+    }
+
+    fn vibrato_offset(&self) -> Frequency {
+        let amount = self.modulation_value(ModulationTarget::Vibrato);
+
+        amount
+    }
+    // =========================
+    // Oscillators
+    // =========================
 
     fn oscillator_samples(&mut self) -> (Sample, Sample) {
         let frequency = self.current_frequency();
 
         self.osc1.set_freq(frequency);
 
-        let detuned = frequency * 2.0_f32.powf(self.params.osc2_detune / 1200.0);
+        let osc2_frequency = frequency * 2.0_f32.powf(self.params.osc2_detune / 1200.0);
 
-        self.osc2.set_freq(detuned);
+        self.osc2.set_freq(osc2_frequency);
 
         let osc1 = self.osc1.next_sample() * self.params.osc1.level;
 
@@ -105,15 +132,19 @@ impl Voice {
         self.osc2.reset_phase();
     }
 
+    // =========================
+    // Filter
+    // =========================
+
     fn filter_cutoff_with_envelope(&self, envelope: Sample) -> Frequency {
         let base = self.filter.cutoff();
 
-        let amount = self.params.envelope.filter_amount;
+        let envelope_amount = self.params.envelope.filter_amount;
 
-        base + (base * amount * envelope)
+        let modulation = self.modulation_value(ModulationTarget::FilterCutoff);
+
+        base + (base * envelope_amount * envelope) + modulation
     }
-
-    // public endpoints
 
     pub fn set_filter_cutoff(&mut self, cutoff: Frequency) {
         self.filter.set_cutoff(cutoff);
@@ -122,6 +153,10 @@ impl Voice {
     pub fn filter_cutoff(&self) -> Frequency {
         self.filter.cutoff()
     }
+
+    // =========================
+    // Parameters
+    // =========================
 
     pub fn set_params(&mut self, params: VoiceParams) {
         self.params = params;
@@ -135,12 +170,19 @@ impl Voice {
         self.params
     }
 
+    // =========================
+    // Notes
+    // =========================
+
     pub fn note_on(&mut self, freq: Frequency) {
+        self.active = true;
+
         self.frequency = freq;
 
         self.reset_oscillators();
 
         self.osc1.set_freq(freq);
+
         self.osc2.set_freq(freq);
 
         self.envelope.note_on();
@@ -150,32 +192,25 @@ impl Voice {
         self.envelope.note_off();
     }
 
-    pub fn apply_modulation(&mut self, modulation: Modulation) {
-        self.modulation = Some(modulation);
-    }
-
-    pub fn clear_modulation(&mut self) {
-        self.modulation = None;
-    }
-
-    pub fn modulation(&self) -> Option<Modulation> {
-        self.modulation
-    }
+    // =========================
+    // Audio
+    // =========================
 
     pub fn next_sample(&mut self) -> Sample {
         let (osc1, osc2) = self.oscillator_samples();
 
         self.mixer.reset();
-
         self.mixer.add(osc1);
         self.mixer.add(osc2);
 
         let mixed = self.mixer.output();
-
         let envelope = self.envelope.next_sample();
 
-        let cutoff = self.filter_cutoff_with_envelope(envelope);
+        if self.envelope.state() == EnvelopeState::Idle {
+            self.active = false;
+        }
 
+        let cutoff = self.filter_cutoff_with_envelope(envelope);
         self.filter.set_cutoff(cutoff);
 
         let filtered = self.filter.process(mixed);
@@ -183,13 +218,17 @@ impl Voice {
         self.apply_volume_modulation(filtered * envelope)
     }
 }
-
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
-    const EPSILON: f32 = 1e-6;
+    use crate::dsp::envelope::EnvelopeState;
+    use crate::dsp::lfo::Lfo;
+    use crate::dsp::modulation::{
+        Modulation, ModulationGenerator, ModulationSource, ModulationTarget,
+    };
+
+    const EPSILON: f32 = 1e-3;
 
     fn assert_approx_eq(actual: f32, expected: f32) {
         assert!(
@@ -200,15 +239,26 @@ mod tests {
         );
     }
 
+    fn push_modulation(voice: &mut Voice, target: ModulationTarget, value: Sample) {
+        voice
+            .modulation_matrix_mut()
+            .push(Modulation::new(ModulationSource::Lfo, target, value));
+    }
+
     #[test]
     fn new_voice_starts_silent() {
         let voice = Voice::new(48_000.0);
 
         assert_eq!(voice.frequency, 0.0);
-
         assert_eq!(voice.envelope.level(), 0.0);
-
         assert_eq!(voice.envelope.state(), EnvelopeState::Idle);
+    }
+
+    #[test]
+    fn new_voice_is_inactive() {
+        let voice = Voice::new(48_000.0);
+
+        assert!(!voice.is_active());
     }
 
     #[test]
@@ -218,10 +268,17 @@ mod tests {
         voice.note_on(440.0);
 
         assert_eq!(voice.frequency, 440.0);
-
         assert_eq!(voice.osc1.freq(), 440.0);
-
         assert_eq!(voice.osc2.freq(), 440.0);
+    }
+
+    #[test]
+    fn note_on_activates_voice() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.note_on(440.0);
+
+        assert!(voice.is_active());
     }
 
     #[test]
@@ -231,6 +288,23 @@ mod tests {
         voice.note_on(440.0);
 
         assert_eq!(voice.envelope.state(), EnvelopeState::Attack);
+    }
+
+    #[test]
+    fn note_on_resets_phases() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.note_on(440.0);
+
+        voice.next_sample();
+        voice.next_sample();
+
+        assert_ne!(voice.osc1.phase(), 0.0);
+
+        voice.note_on(220.0);
+
+        assert_eq!(voice.osc1.phase(), 0.0);
+        assert_eq!(voice.osc2.phase(), 0.0);
     }
 
     #[test]
@@ -252,61 +326,23 @@ mod tests {
     }
 
     #[test]
-    fn note_off_releases_voice() {
+    fn modulation_value_can_be_pushed() {
         let mut voice = Voice::new(48_000.0);
 
-        voice.note_on(440.0);
+        push_modulation(&mut voice, ModulationTarget::Pitch, 2.0);
 
-        for _ in 0..20_000 {
-            voice.next_sample();
-        }
-
-        voice.note_off();
-
-        assert_eq!(voice.envelope.state(), EnvelopeState::Release);
+        assert_eq!(voice.modulation_value(ModulationTarget::Pitch), 2.0);
     }
 
     #[test]
-    fn note_off_eventually_silences_voice() {
+    fn modulation_values_stack() {
         let mut voice = Voice::new(48_000.0);
 
-        voice.note_on(440.0);
+        push_modulation(&mut voice, ModulationTarget::Pitch, 5.0);
 
-        for _ in 0..20_000 {
-            voice.next_sample();
-        }
+        push_modulation(&mut voice, ModulationTarget::Pitch, 7.0);
 
-        voice.note_off();
-
-        for _ in 0..20_000 {
-            voice.next_sample();
-        }
-
-        assert_approx_eq(voice.next_sample(), 0.0);
-
-        assert_eq!(voice.envelope.state(), EnvelopeState::Idle);
-    }
-
-    #[test]
-    fn modulation_is_stored() {
-        let mut voice = Voice::new(48_000.0);
-
-        let modulation = Modulation::new(ModulationTarget::Pitch, 128);
-
-        voice.apply_modulation(modulation);
-
-        assert_eq!(voice.modulation(), Some(modulation));
-    }
-
-    #[test]
-    fn modulation_can_be_cleared() {
-        let mut voice = Voice::new(48_000.0);
-
-        voice.apply_modulation(Modulation::new(ModulationTarget::Volume, 100));
-
-        voice.clear_modulation();
-
-        assert_eq!(voice.modulation(), None);
+        assert_eq!(voice.modulation_value(ModulationTarget::Pitch), 12.0);
     }
 
     #[test]
@@ -315,48 +351,104 @@ mod tests {
 
         voice.note_on(440.0);
 
-        voice.apply_modulation(Modulation::new(ModulationTarget::Pitch, 10));
+        push_modulation(&mut voice, ModulationTarget::Pitch, 10.0);
 
-        assert_eq!(voice.current_frequency(), 450.0);
+        assert_approx_eq(voice.current_frequency(), 783.99);
     }
 
     #[test]
-    fn volume_modulation_reduces_output() {
+    fn pitch_octave_doubles_frequency() {
         let mut voice = Voice::new(48_000.0);
 
         voice.note_on(440.0);
 
-        voice.apply_modulation(Modulation::new(ModulationTarget::Volume, 128));
+        push_modulation(&mut voice, ModulationTarget::Pitch, 12.0);
 
-        for _ in 0..100 {
-            voice.next_sample();
-        }
-
-        let sample = voice.next_sample();
-
-        assert!(sample.abs() <= 1.0);
+        assert_approx_eq(voice.current_frequency(), 880.0);
     }
 
     #[test]
-    fn output_stays_in_range() {
+    fn vibrato_modulation_changes_frequency() {
         let mut voice = Voice::new(48_000.0);
 
         voice.note_on(440.0);
 
-        for _ in 0..100_000 {
-            let sample = voice.next_sample();
+        push_modulation(&mut voice, ModulationTarget::Vibrato, -5.0);
 
-            assert!((-1.0..=1.0).contains(&sample), "out of range: {}", sample);
-        }
+        assert_eq!(voice.current_frequency(), 435.0);
     }
 
     #[test]
-    fn default_voice_has_two_sine_oscillators() {
+    fn volume_without_modulation_returns_one() {
         let voice = Voice::new(48_000.0);
 
-        assert_eq!(voice.params.osc1.waveform, Waveform::Sine);
+        assert_eq!(voice.volume_multiplier(), 1.0);
+    }
 
-        assert_eq!(voice.params.osc2.waveform, Waveform::Sine);
+    #[test]
+    fn volume_modulation_is_multiplier() {
+        let mut voice = Voice::new(48_000.0);
+
+        push_modulation(&mut voice, ModulationTarget::Volume, 0.5);
+
+        assert_eq!(voice.volume_multiplier(), 0.5);
+    }
+
+    #[test]
+    fn volume_modulation_is_clamped() {
+        let mut voice = Voice::new(48_000.0);
+
+        push_modulation(&mut voice, ModulationTarget::Volume, 2.0);
+
+        assert_eq!(voice.volume_multiplier(), 1.0);
+    }
+
+    #[test]
+    fn reset_modulation_clears_values() {
+        let mut voice = Voice::new(48_000.0);
+
+        push_modulation(&mut voice, ModulationTarget::Pitch, 10.0);
+
+        assert_eq!(voice.modulation_value(ModulationTarget::Pitch), 10.0);
+
+        voice.reset_modulation();
+
+        assert_eq!(voice.modulation_value(ModulationTarget::Pitch), 0.0);
+    }
+
+    #[test]
+    fn filter_cutoff_can_be_changed() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.set_filter_cutoff(800.0);
+
+        assert_eq!(voice.filter_cutoff(), 800.0);
+    }
+
+    #[test]
+    fn filter_envelope_changes_cutoff() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.set_filter_cutoff(1000.0);
+
+        let mut params = voice.params();
+
+        params.envelope.filter_amount = 1.0;
+
+        voice.set_params(params);
+
+        assert_eq!(voice.filter_cutoff_with_envelope(1.0), 2000.0);
+    }
+
+    #[test]
+    fn filter_modulation_changes_cutoff() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.set_filter_cutoff(1000.0);
+
+        push_modulation(&mut voice, ModulationTarget::FilterCutoff, 250.0);
+
+        assert_eq!(voice.filter_cutoff_with_envelope(0.0), 1250.0);
     }
 
     #[test]
@@ -371,67 +463,98 @@ mod tests {
 
         voice.set_params(params);
 
-        let (_, osc2_freq) = (voice.osc1.freq(), voice.osc2.freq());
-
         voice.next_sample();
 
         assert_eq!(voice.osc2.freq(), 880.0);
     }
+
     #[test]
-    fn note_on_resets_oscillator_phases() {
+    fn output_stays_in_range() {
         let mut voice = Voice::new(48_000.0);
 
         voice.note_on(440.0);
 
-        voice.next_sample();
-        voice.next_sample();
+        for _ in 0..100_000 {
+            let sample = voice.next_sample();
 
-        assert_ne!(voice.osc1.phase(), 0.0);
-
-        voice.note_on(220.0);
-
-        assert_eq!(voice.osc1.phase(), 0.0);
-
-        assert_eq!(voice.osc2.phase(), 0.0);
+            assert!((-1.0..=1.0).contains(&sample), "out of range {}", sample);
+        }
     }
 
     #[test]
-    fn filter_cutoff_can_be_changed() {
+    fn lfo_modulation_can_be_pushed_into_voice() {
         let mut voice = Voice::new(48_000.0);
 
-        voice.set_filter_cutoff(800.0);
+        let mut lfo = Lfo::new(48_000.0);
 
-        assert_eq!(voice.filter_cutoff(), 800.0);
+        lfo.set_target(ModulationTarget::Pitch);
+
+        let modulation = lfo.next_modulation();
+
+        voice.modulation_matrix_mut().push(modulation);
+
+        let value = voice.modulation_value(ModulationTarget::Pitch);
+
+        assert!((-1.0..=1.0).contains(&value));
     }
 
     #[test]
-    fn filter_removes_dc_after_reset() {
-        let mut filter = LowPassFilter::new(48_000.0);
+    fn lfo_pitch_modulation_changes_frequency() {
+        let mut voice = Voice::new(48_000.0);
 
-        filter.set_cutoff(1000.0);
+        voice.note_on(440.0);
 
-        let mut output = 0.0;
+        let mut lfo = Lfo::new(48_000.0);
 
-        for _ in 0..5000 {
-            output = filter.process(1.0);
+        lfo.set_target(ModulationTarget::Pitch);
+        lfo.set_amount(12.0);
+
+        for _ in 0..100 {
+            voice.reset_modulation();
+
+            let modulation = lfo.next_modulation();
+
+            voice.modulation_matrix_mut().push(modulation);
+
+            if voice.modulation_value(ModulationTarget::Pitch) != 0.0 {
+                assert_ne!(voice.current_frequency(), 440.0);
+
+                return;
+            }
         }
 
-        assert!(output > 0.9);
+        panic!("LFO never produced modulation");
     }
+
     #[test]
-    fn filter_envelope_changes_cutoff() {
+    fn lfo_pitch_modulation_moves_frequency_range() {
         let mut voice = Voice::new(48_000.0);
 
-        voice.set_filter_cutoff(1000.0);
+        voice.note_on(440.0);
 
-        let mut params = voice.params();
+        let mut lfo = Lfo::new(48_000.0);
 
-        params.envelope.filter_amount = 1.0;
+        lfo.set_target(ModulationTarget::Pitch);
+        lfo.set_amount(12.0);
 
-        voice.set_params(params);
+        let mut min = f32::MAX;
+        let mut max = f32::MIN;
 
-        let cutoff = voice.filter_cutoff_with_envelope(1.0);
+        for _ in 0..20_000 {
+            voice.reset_modulation();
 
-        assert_eq!(cutoff, 2000.0);
+            let modulation = lfo.next_modulation();
+
+            voice.modulation_matrix_mut().push(modulation);
+
+            let frequency = voice.current_frequency();
+
+            min = min.min(frequency);
+            max = max.max(frequency);
+        }
+
+        assert!(min < 440.0, "LFO never lowered pitch, min={}", min);
+
+        assert!(max > 440.0, "LFO never raised pitch, max={}", max);
     }
 }

@@ -1,13 +1,16 @@
-use crate::dsp::modulation::{Modulation, ModulationTarget};
+use crate::dsp::modulation::{Modulation, ModulationGenerator, ModulationSource, ModulationTarget};
+
 use crate::dsp::phase_generator::PhaseGenerator;
 use crate::dsp::types::DEFAULT_LFO_FREQ;
 
 use super::types::{Frequency, Phase, Sample, SampleRate};
+
 use super::waveform::Waveform;
 
+#[derive(Clone)]
 pub struct Lfo {
     generator: PhaseGenerator,
-    depth: Sample,
+    amount: Sample,
     target: ModulationTarget,
 }
 
@@ -19,12 +22,14 @@ impl Lfo {
 
         Self {
             generator,
-            depth: 1.0,
+            amount: 1.0,
             target: ModulationTarget::Vibrato,
         }
     }
 
+    // =========================
     // Setters
+    // =========================
 
     pub fn set_freq(&mut self, freq: Frequency) {
         self.generator.set_freq(freq);
@@ -34,15 +39,17 @@ impl Lfo {
         self.generator.set_waveform(waveform);
     }
 
-    pub fn set_depth(&mut self, depth: Sample) {
-        self.depth = depth;
+    pub fn set_amount(&mut self, amount: Sample) {
+        self.amount = amount;
     }
 
     pub fn set_target(&mut self, target: ModulationTarget) {
         self.target = target;
     }
 
+    // =========================
     // Getters
+    // =========================
 
     pub fn freq(&self) -> Frequency {
         self.generator.freq()
@@ -52,8 +59,8 @@ impl Lfo {
         self.generator.waveform()
     }
 
-    pub fn depth(&self) -> Sample {
-        self.depth
+    pub fn amount(&self) -> Sample {
+        self.amount
     }
 
     pub fn phase(&self) -> Phase {
@@ -64,25 +71,30 @@ impl Lfo {
         self.target
     }
 
+    // =========================
     // Control
+    // =========================
 
     pub fn reset(&mut self) {
         self.generator.reset();
     }
 
+    // =========================
     // Output
+    // =========================
 
     pub fn next_sample(&mut self) -> Sample {
-        self.generator.next_sample() * self.depth
+        self.generator.next_sample() * self.amount
+    }
+}
+
+impl ModulationGenerator for Lfo {
+    fn next_modulation(&mut self) -> Modulation {
+        Modulation::new(ModulationSource::Lfo, self.target, self.next_sample())
     }
 
-    pub fn modulation(&mut self) -> Modulation {
-        let sample = self.next_sample();
-
-        // convert -1..1 into 0..255
-        let amount = (((sample + 1.0) * 0.5) * 255.0).clamp(0.0, 255.0) as u8;
-
-        Modulation::new(self.target, amount)
+    fn reset(&mut self) {
+        Lfo::reset(self);
     }
 }
 
@@ -106,9 +118,13 @@ mod tests {
         let lfo = Lfo::new(48_000.0);
 
         assert_eq!(lfo.waveform(), Waveform::Sine);
+
         assert_eq!(lfo.freq(), DEFAULT_LFO_FREQ);
+
         assert_eq!(lfo.phase(), 0.0);
-        assert_eq!(lfo.depth(), 1.0);
+
+        assert_eq!(lfo.amount(), 1.0);
+
         assert_eq!(lfo.target(), ModulationTarget::Vibrato);
     }
 
@@ -131,12 +147,12 @@ mod tests {
     }
 
     #[test]
-    fn set_depth_changes_depth() {
+    fn set_amount_changes_amount() {
         let mut lfo = Lfo::new(48_000.0);
 
-        lfo.set_depth(0.25);
+        lfo.set_amount(0.25);
 
-        assert_eq!(lfo.depth(), 0.25);
+        assert_eq!(lfo.amount(), 0.25);
     }
 
     #[test]
@@ -168,8 +184,11 @@ mod tests {
         let mut lfo = Lfo::new(48_000.0);
 
         lfo.set_freq(2.0);
-        lfo.set_depth(0.5);
+
+        lfo.set_amount(0.5);
+
         lfo.set_waveform(Waveform::Square);
+
         lfo.set_target(ModulationTarget::Pitch);
 
         lfo.next_sample();
@@ -177,8 +196,11 @@ mod tests {
         lfo.reset();
 
         assert_eq!(lfo.freq(), 2.0);
-        assert_eq!(lfo.depth(), 0.5);
+
+        assert_eq!(lfo.amount(), 0.5);
+
         assert_eq!(lfo.waveform(), Waveform::Square);
+
         assert_eq!(lfo.target(), ModulationTarget::Pitch);
     }
 
@@ -211,37 +233,43 @@ mod tests {
     }
 
     #[test]
-    fn depth_scales_output() {
-        let mut lfo = Lfo::new(48_000.0);
+    fn amount_scales_output() {
+        let mut full = Lfo::new(48_000.0);
 
-        lfo.set_depth(0.5);
+        full.generator.set_phase(0.25);
 
-        lfo.generator.set_phase(0.25);
+        let full_sample = full.next_sample();
 
-        let sample = lfo.next_sample();
+        let mut half = Lfo::new(48_000.0);
 
-        assert_approx_eq(sample, 0.5);
+        half.set_amount(0.5);
+
+        half.generator.set_phase(0.25);
+
+        let half_sample = half.next_sample();
+
+        assert_approx_eq(half_sample, full_sample * 0.5);
     }
 
     #[test]
-    fn output_respects_depth_range() {
+    fn output_respects_amount_range() {
         let mut lfo = Lfo::new(48_000.0);
 
-        lfo.set_depth(0.25);
+        lfo.set_amount(0.25);
 
         for _ in 0..100_000 {
             let sample = lfo.next_sample();
 
             assert!(
                 (-0.25..=0.25).contains(&sample),
-                "sample {} outside depth range",
+                "sample {} outside amount range",
                 sample
             );
         }
     }
 
     #[test]
-    fn output_stays_in_range_with_full_depth() {
+    fn output_stays_in_range_with_full_amount() {
         let mut lfo = Lfo::new(48_000.0);
 
         for _ in 0..100_000 {
@@ -261,22 +289,27 @@ mod tests {
 
         lfo.set_target(ModulationTarget::Pitch);
 
-        let modulation = lfo.modulation();
+        let modulation = lfo.next_modulation();
 
         assert_eq!(modulation.target(), ModulationTarget::Pitch);
 
-        assert!((-1.0..=1.0).contains(&modulation.normalized()));
+        assert_eq!(modulation.source(), ModulationSource::Lfo);
+
+        assert!((-1.0..=1.0).contains(&modulation.value()));
     }
 
     #[test]
     fn target_does_not_affect_generation() {
         let mut pitch_lfo = Lfo::new(48_000.0);
+
         let mut volume_lfo = Lfo::new(48_000.0);
 
         pitch_lfo.set_target(ModulationTarget::Pitch);
+
         volume_lfo.set_target(ModulationTarget::Volume);
 
         let a = pitch_lfo.next_sample();
+
         let b = volume_lfo.next_sample();
 
         assert_approx_eq(a, b);

@@ -3,6 +3,7 @@ use super::types::{
 };
 use super::waveform::Waveform;
 
+#[derive(Clone)]
 pub struct PhaseGenerator {
     waveform: Waveform,
     phase: Phase,

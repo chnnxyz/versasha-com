@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Versasha Synth</title>
+
+    <style>
+        :root {
+            color-scheme: dark;
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 32px;
+
+            background: #111;
+            color: #f5f5f5;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        .app {
+            width: min(960px, 100%);
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .status {
+            color: #aaa;
+        }
+
+        .status.running {
+            color: #90ee90;
+        }
+
+        #start {
+            border: 1px solid #777;
+            border-radius: 8px;
+            padding: 10px 18px;
+
+            background: #222;
+            color: white;
+
+            cursor: pointer;
+        }
+
+        #start:hover {
+            background: #333;
+        }
+
+        #start:disabled {
+            cursor: default;
+            opacity: 0.6;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .section {
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+
+            background: #191919;
+        }
+
+        .section h2 {
+            margin: 0 0 18px;
+
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+
+            color: #bbb;
+        }
+
+        .control {
+            margin-bottom: 18px;
+        }
+
+        .control:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+
+            margin-bottom: 8px;
+        }
+
+        .value {
+            min-width: 80px;
+            text-align: right;
+
+            color: #aaa;
+
+            font-variant-numeric: tabular-nums;
+        }
+
+        input[type="range"],
+        select {
+            width: 100%;
+        }
+
+        input[type="range"] {
+            cursor: pointer;
+        }
+
+        select {
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 8px;
+
+            background: #222;
+            color: white;
+        }
+
+        .keyboard-help {
+            margin-top: 24px;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 18px;
+
+            background: #191919;
+        }
+
+        .keyboard-help code {
+            display: inline-block;
+
+            margin: 4px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 5px 8px;
+
+            background: #242424;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="app">
+        <header class="header">
+            <div>
+                <h1>Versasha</h1>
+
+                <div
+                    id="status"
+                    class="status"
+                >
+                    Audio stopped
+                </div>
+            </div>
+
+            <button
+                id="start"
+                type="button"
+            >
+                Start audio
+            </button>
+        </header>
+
+        <div class="controls">
+            <section class="section">
+                <h2>Oscillator 1</h2>
+
+                <div class="control">
+                    <div class="control-header">
+                        <label for="osc1-waveform">
+                            Waveform
+                        </label>
+                    </div>
+
+                    <select id="osc1-waveform">
+                        <option value="0">Sine</option>
+                        <option value="1">Square</option>
+                        <option value="2">Saw</option>
+                        <option value="3">Triangle</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <div class="control-header">
+                        <label for="osc1-level">
+                            Level
+                        </label>
+
+                        <output
+                            id="osc1-level-value"
+                            class="value"
+                        >
+                            1.00
+                        </output>
+                    </div>
+
+                    <input
+                        id="osc1-level"
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value="1"
+                    >
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>Oscillator 2</h2>
+
+                <div class="control">
+                    <div class="control-header">
+                        <label for="osc2-waveform">
+                            Waveform
+                        </label>
+                    </div>
+
+                    <select id="osc2-waveform">
+                        <option value="0">Sine</option>
+                        <option value="1">Square</option>
+                        <option value="2">Saw</option>
+                        <option value="3">Triangle</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <div class="control-header">
+                        <label for="osc2-level">
+                            Level
+                        </label>
+
+                        <output
+                            id="osc2-level-value"
+                            class="value"
+                        >
+                            1.00
+                        </output>
+                    </div>
+
+                    <input
+                        id="osc2-level"
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value="1"
+                    >
+                </div>
+
+                <div class="control">
+                    <div class="control-header">
+                        <label for="osc2-detune">
+                            Detune
+                        </label>
+
+                        <output
+                            id="osc2-detune-value"
+                            class="value"
+                        >
+                            0 cents
+                        </output>
+                    </div>
+
+                    <input
+                        id="osc2-detune"
+                        type="range"
+                        min="-100"
+                        max="100"
+                        step="1"
+                        value="0"
+                    >
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>Filter</h2>
+
+                <div class="control">
+                    <div class="control-header">
+                        <label for="filter-cutoff">
+                            Cutoff
+                        </label>
+
+                        <output
+                            id="filter-cutoff-value"
+                            class="value"
+                        >
+                            3.3 kHz
+                        </output>
+                    </div>
+
+                    <input
+                        id="filter-cutoff"
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.001"
+                        value="0.75"
+                    >
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>Global LFO</h2>
+
+                <div class="control">
+                    <div class="control-header">
+                        <label for="lfo-target">
+                            Target
+                        </label>
+                    </div>
+
+                    <select id="lfo-target">
+                        <option value="0">Pitch</option>
+                        <option value="1" selected>Vibrato</option>
+                        <option value="2">Volume</option>
+                        <option value="3">Filter cutoff</option>
+                    </select>
+                </div>
+
+                <div class="control">
+                    <div class="control-header">
+                        <label for="lfo-frequency">
+                            Rate
+                        </label>
+
+                        <output
+                            id="lfo-frequency-value"
+                            class="value"
+                        >
+                            5.0 Hz
+                        </output>
+                    </div>
+
+                    <input
+                        id="lfo-frequency"
+                        type="range"
+                        min="0.1"
+                        max="20"
+                        step="0.1"
+                        value="5"
+                    >
+                </div>
+
+                <div class="control">
+                    <div class="control-header">
+                        <label for="lfo-amount">
+                            Amount
+                        </label>
+
+                        <output
+                            id="lfo-amount-value"
+                            class="value"
+                        >
+                            1.0
+                        </output>
+                    </div>
+
+                    <input
+                        id="lfo-amount"
+                        type="range"
+                        min="0"
+                        max="12"
+                        step="0.1"
+                        value="1"
+                    >
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>Output</h2>
+
+                <div class="control">
+                    <div class="control-header">
+                        <label for="master-volume">
+                            Master volume
+                        </label>
+
+                        <output
+                            id="master-volume-value"
+                            class="value"
+                        >
+                            0.50
+                        </output>
+                    </div>
+
+                    <input
+                        id="master-volume"
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value="0.5"
+                    >
+                </div>
+            </section>
+        </div>
+
+        <section class="keyboard-help">
+            <strong>Keyboard</strong>
+
+            <div>
+                <code>A</code>
+                <code>W</code>
+                <code>S</code>
+                <code>E</code>
+                <code>D</code>
+                <code>F</code>
+                <code>T</code>
+                <code>G</code>
+                <code>Y</code>
+                <code>H</code>
+                <code>U</code>
+                <code>J</code>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+    const audio = new AudioContext();
+
+    const wasmResponse = await fetch(
+        "../pkg/versasha_com_bg.wasm"
+    );
+
+    if (!wasmResponse.ok) {
+        throw new Error(
+            `Failed to fetch WASM: ${wasmResponse.status}`
+        );
+    }
+
+    const wasmBytes =
+        await wasmResponse.arrayBuffer();
+
+    const wasmModule =
+        await WebAssembly.compile(wasmBytes);
+
+    await audio.audioWorklet.addModule(
+        `./synth-worklet.js?v=${Date.now()}`
+    );
+
+    const node = new AudioWorkletNode(
+        audio,
+        "synth-processor",
+        {
+            numberOfInputs: 0,
+            numberOfOutputs: 1,
+            outputChannelCount: [2],
+
+            processorOptions: {
+                wasmModule
+            }
+        }
+    );
+
+    node.connect(audio.destination);
+
+        node.connect(audio.destination);
+
+        const startButton =
+            document.getElementById("start");
+
+        const status =
+            document.getElementById("status");
+
+        function send(type, value) {
+            node.port.postMessage({
+                type,
+                value
+            });
+        }
+
+        function sendNoteOn(frequency) {
+            node.port.postMessage({
+                type: "note-on",
+                frequency
+            });
+        }
+
+        function sendNoteOff(frequency) {
+            node.port.postMessage({
+                type: "note-off",
+                frequency
+            });
+        }
+
+        async function startAudio() {
+            await audio.resume();
+
+            startButton.disabled = true;
+            startButton.textContent = "Audio running";
+
+            status.textContent = "Audio running";
+            status.classList.add("running");
+        }
+
+        startButton.addEventListener(
+            "click",
+            startAudio
+        );
+
+        function bindRange({
+            inputId,
+            outputId,
+            format,
+            messageType
+        }) {
+            const input =
+                document.getElementById(inputId);
+
+            const output =
+                document.getElementById(outputId);
+
+            function apply() {
+                const value =
+                    Number(input.value);
+
+                output.value =
+                    format(value);
+
+                send(
+                    messageType,
+                    value
+                );
+            }
+
+            input.addEventListener(
+                "input",
+                apply
+            );
+
+            apply();
+        }
+
+        bindRange({
+            inputId: "osc1-level",
+            outputId: "osc1-level-value",
+            format: value => value.toFixed(2),
+            messageType: "osc1-level"
+        });
+
+        bindRange({
+            inputId: "osc2-level",
+            outputId: "osc2-level-value",
+            format: value => value.toFixed(2),
+            messageType: "osc2-level"
+        });
+
+        bindRange({
+            inputId: "osc2-detune",
+            outputId: "osc2-detune-value",
+            format: value =>
+                `${value > 0 ? "+" : ""}${value} cents`,
+            messageType: "osc2-detune"
+        });
+
+        bindRange({
+            inputId: "lfo-frequency",
+            outputId: "lfo-frequency-value",
+            format: value =>
+                `${value.toFixed(1)} Hz`,
+            messageType: "lfo-frequency"
+        });
+
+        bindRange({
+            inputId: "lfo-amount",
+            outputId: "lfo-amount-value",
+            format: value =>
+                value.toFixed(1),
+            messageType: "lfo-amount"
+        });
+
+        bindRange({
+            inputId: "master-volume",
+            outputId: "master-volume-value",
+            format: value =>
+                value.toFixed(2),
+            messageType: "master-volume"
+        });
+
+        const cutoffInput =
+            document.getElementById(
+                "filter-cutoff"
+            );
+
+        const cutoffOutput =
+            document.getElementById(
+                "filter-cutoff-value"
+            );
+
+        function logarithmicFrequency(
+            position,
+            minimum = 20,
+            maximum = 18_000
+        ) {
+            return minimum *
+                Math.pow(
+                    maximum / minimum,
+                    position
+                );
+        }
+
+        function updateCutoff() {
+            const position =
+                Number(cutoffInput.value);
+
+            const frequency =
+                logarithmicFrequency(position);
+
+            cutoffOutput.value =
+                frequency >= 1000
+                    ? `${(frequency / 1000).toFixed(1)} kHz`
+                    : `${Math.round(frequency)} Hz`;
+
+            send(
+                "filter-cutoff",
+                frequency
+            );
+        }
+
+        cutoffInput.addEventListener(
+            "input",
+            updateCutoff
+        );
+
+        updateCutoff();
+
+        const osc1Waveform =
+            document.getElementById(
+                "osc1-waveform"
+            );
+
+        osc1Waveform.addEventListener(
+            "change",
+            () => {
+                send(
+                    "osc1-waveform",
+                    Number(osc1Waveform.value)
+                );
+            }
+        );
+
+        const osc2Waveform =
+            document.getElementById(
+                "osc2-waveform"
+            );
+
+        osc2Waveform.addEventListener(
+            "change",
+            () => {
+                send(
+                    "osc2-waveform",
+                    Number(osc2Waveform.value)
+                );
+            }
+        );
+
+        const lfoTarget =
+            document.getElementById(
+                "lfo-target"
+            );
+
+        lfoTarget.addEventListener(
+            "change",
+            () => {
+                send(
+                    "lfo-target",
+                    Number(lfoTarget.value)
+                );
+            }
+        );
+
+        send(
+            "osc1-waveform",
+            Number(osc1Waveform.value)
+        );
+
+        send(
+            "osc2-waveform",
+            Number(osc2Waveform.value)
+        );
+
+        send(
+            "lfo-target",
+            Number(lfoTarget.value)
+        );
+
+        const keys = {
+            a: 261.63,
+            w: 277.18,
+            s: 293.66,
+            e: 311.13,
+            d: 329.63,
+            f: 349.23,
+            t: 369.99,
+            g: 392.00,
+            y: 415.30,
+            h: 440.00,
+            u: 466.16,
+            j: 493.88
+        };
+
+        const heldKeys =
+            new Set();
+
+        window.addEventListener(
+            "keydown",
+            async event => {
+                const key =
+                    event.key.toLowerCase();
+
+                const frequency =
+                    keys[key];
+
+                if (
+                    !frequency ||
+                    heldKeys.has(key)
+                ) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                heldKeys.add(key);
+
+                await startAudio();
+
+                sendNoteOn(frequency);
+            }
+        );
+
+        window.addEventListener(
+            "keyup",
+            event => {
+                const key =
+                    event.key.toLowerCase();
+
+                const frequency =
+                    keys[key];
+
+                if (!frequency) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                heldKeys.delete(key);
+
+                sendNoteOff(frequency);
+            }
+        );
+
+        window.addEventListener(
+            "blur",
+            () => {
+                for (const key of heldKeys) {
+                    sendNoteOff(keys[key]);
+                }
+
+                heldKeys.clear();
+            }
+        );
+    </script>
+</body>
+</html>
