@@ -102,36 +102,6 @@
             text-transform: lowercase;
         }
 
-        #status {
-            margin-top: 6px;
-
-            color: #888;
-
-            font-size: 11px;
-            text-transform: uppercase;
-        }
-
-        #start {
-            border: 1px solid #fff;
-            border-radius: 0;
-            padding: 8px 14px;
-
-            background: #000;
-            color: #fff;
-
-            cursor: pointer;
-        }
-
-        #start:hover {
-            background: #fff;
-            color: #000;
-        }
-
-        #start:disabled {
-            cursor: default;
-            opacity: 0.5;
-        }
-
         .modules {
             display: grid;
             grid-template-columns:
@@ -330,6 +300,100 @@
             color: #fff;
         }
 
+        .mobile-keys {
+            display: none;
+
+            position: relative;
+
+            height: 120px;
+            margin-bottom: 30px;
+
+            border: 1px solid #fff;
+        }
+
+        .mobile-keys-white {
+            display: flex;
+
+            height: 100%;
+        }
+
+        .mobile-key {
+            appearance: none;
+            -webkit-appearance: none;
+
+            border: 0;
+            border-radius: 0;
+
+            font: inherit;
+
+            cursor: pointer;
+            touch-action: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mobile-key-white {
+            flex: 1 0 0;
+
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 10px;
+
+            background: #fff;
+            color: #000;
+
+            border-right: 1px solid #000;
+
+            font-size: 11px;
+            letter-spacing: 0.06em;
+        }
+
+        .mobile-key-white:last-child {
+            border-right: 0;
+        }
+
+        .mobile-key-white.active {
+            background: #888;
+        }
+
+        .mobile-keys-black {
+            position: absolute;
+            top: 0;
+            left: 0;
+
+            width: 100%;
+            height: 58%;
+
+            pointer-events: none;
+        }
+
+        .mobile-key-black {
+            position: absolute;
+            top: 0;
+
+            width: calc(100% / 7 * 0.6);
+            height: 100%;
+
+            left: calc((var(--pos) + 1) * (100% / 7));
+            transform: translateX(-50%);
+
+            background: #000;
+            border: 1px solid #fff;
+
+            pointer-events: auto;
+        }
+
+        .mobile-key-black.active {
+            background: #444;
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .mobile-keys {
+                display: block;
+            }
+        }
+
         @media (max-width: 760px) {
             .modules {
                 grid-template-columns:
@@ -361,21 +425,33 @@
 <body>
     <main class="synth">
         <header>
-            <div>
-                <h1>versasha.com</h1>
+            <h1>versasha.com</h1>
+        </header>
 
-                <div id="status">
-                    Audio stopped
-                </div>
+        <div
+            class="mobile-keys"
+            id="mobile-keys"
+            role="group"
+            aria-label="On-screen keyboard"
+        >
+            <div class="mobile-keys-white">
+                <button class="mobile-key mobile-key-white" type="button" data-key="a">C</button>
+                <button class="mobile-key mobile-key-white" type="button" data-key="s">D</button>
+                <button class="mobile-key mobile-key-white" type="button" data-key="d">E</button>
+                <button class="mobile-key mobile-key-white" type="button" data-key="f">F</button>
+                <button class="mobile-key mobile-key-white" type="button" data-key="g">G</button>
+                <button class="mobile-key mobile-key-white" type="button" data-key="h">A</button>
+                <button class="mobile-key mobile-key-white" type="button" data-key="j">B</button>
             </div>
 
-            <button
-                id="start"
-                type="button"
-            >
-                Start
-            </button>
-        </header>
+            <div class="mobile-keys-black">
+                <button class="mobile-key mobile-key-black" type="button" data-key="w" style="--pos: 0;"></button>
+                <button class="mobile-key mobile-key-black" type="button" data-key="e" style="--pos: 1;"></button>
+                <button class="mobile-key mobile-key-black" type="button" data-key="t" style="--pos: 3;"></button>
+                <button class="mobile-key mobile-key-black" type="button" data-key="y" style="--pos: 4;"></button>
+                <button class="mobile-key mobile-key-black" type="button" data-key="u" style="--pos: 5;"></button>
+            </div>
+        </div>
 
         <div class="modules">
             <section class="module">
@@ -1092,27 +1168,8 @@
             }
         };
 
-        const startButton =
-            document.getElementById("start");
-
-        const status =
-            document.getElementById("status");
-
         const noteDisplay =
             document.getElementById("note-display");
-
-        async function startAudio() {
-            await audio.resume();
-
-            startButton.disabled = true;
-            startButton.textContent = "Running";
-            status.textContent = "Audio running";
-        }
-
-        startButton.addEventListener(
-            "click",
-            startAudio
-        );
 
         function send(type, value) {
             node.port.postMessage({
@@ -1564,7 +1621,7 @@
 
             heldKeys.add(key);
 
-            await startAudio();
+            await audio.resume();
 
             sendNoteOn(note.frequency);
 
@@ -1593,6 +1650,46 @@
                 remaining
                     ? `${notes[remaining].name} — ${notes[remaining].frequency.toFixed(2)} Hz`
                     : "---";
+        }
+
+        const mobileKeys =
+            document.querySelectorAll(
+                ".mobile-key"
+            );
+
+        for (const button of mobileKeys) {
+            const key =
+                button.dataset.key;
+
+            button.addEventListener(
+                "pointerdown",
+                event => {
+                    event.preventDefault();
+
+                    button.classList.add(
+                        "active"
+                    );
+
+                    pressKey(key);
+                }
+            );
+
+            for (const type of [
+                "pointerup",
+                "pointercancel",
+                "pointerleave"
+            ]) {
+                button.addEventListener(
+                    type,
+                    () => {
+                        button.classList.remove(
+                            "active"
+                        );
+
+                        releaseKey(key);
+                    }
+                );
+            }
         }
 
         window.addEventListener(
