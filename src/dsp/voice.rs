@@ -1,7 +1,7 @@
 use crate::dsp::envelope::EnvelopeState;
-use crate::dsp::filter::LowPassFilter;
-use crate::dsp::fx::delay::Delay;
+use crate::dsp::filter::{Filter, FilterType};
 use crate::dsp::fx::FxRoute;
+use crate::dsp::fx::delay::Delay;
 use crate::dsp::mixer::Mixer;
 use crate::dsp::modulation::ModulationTarget;
 use crate::dsp::modulation_matrix::ModulationMatrix;
@@ -27,7 +27,7 @@ pub struct Voice {
 
     params: VoiceParams,
 
-    filter: LowPassFilter,
+    filter: Filter,
 
     delay: Delay,
 
@@ -53,7 +53,7 @@ impl Voice {
 
             params: VoiceParams::default(),
 
-            filter: LowPassFilter::new(rate),
+            filter: Filter::new(rate),
 
             delay: Delay::new(rate),
 
@@ -168,6 +168,22 @@ impl Voice {
 
     pub fn filter_cutoff(&self) -> Frequency {
         self.filter.cutoff()
+    }
+
+    pub fn set_filter_resonance(&mut self, resonance: f32) {
+        self.filter.set_resonance(resonance);
+    }
+
+    pub fn filter_resonance(&self) -> f32 {
+        self.filter.resonance()
+    }
+
+    pub fn set_filter_type(&mut self, filter_type: FilterType) {
+        self.filter.set_filter_type(filter_type);
+    }
+
+    pub fn filter_type(&self) -> FilterType {
+        self.filter.filter_type()
     }
 
     // =========================
@@ -479,6 +495,24 @@ mod tests {
         voice.set_filter_cutoff(800.0);
 
         assert_eq!(voice.filter_cutoff(), 800.0);
+    }
+
+    #[test]
+    fn filter_resonance_can_be_changed() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.set_filter_resonance(0.6);
+
+        assert_eq!(voice.filter_resonance(), 0.6);
+    }
+
+    #[test]
+    fn filter_type_can_be_changed() {
+        let mut voice = Voice::new(48_000.0);
+
+        voice.set_filter_type(FilterType::HighPass);
+
+        assert_eq!(voice.filter_type(), FilterType::HighPass);
     }
 
     #[test]

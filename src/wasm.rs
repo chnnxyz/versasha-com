@@ -1,5 +1,6 @@
 use wasm_bindgen::prelude::*;
 
+use crate::dsp::filter::FilterType;
 use crate::dsp::fx::FxRoute;
 use crate::dsp::waveform::Waveform;
 use crate::engine::synth::Synth;
@@ -54,6 +55,19 @@ impl SynthEngine {
 
     pub fn set_filter_cutoff(&mut self, cutoff: f32) {
         self.synth.set_filter_cutoff(cutoff);
+    }
+
+    pub fn set_filter_resonance(&mut self, resonance: f32) {
+        self.synth.set_filter_resonance(resonance);
+    }
+
+    pub fn set_filter_type(&mut self, filter_type: u32) {
+        self.synth.set_filter_type(match filter_type {
+            0 => FilterType::LowPass,
+            1 => FilterType::HighPass,
+            2 => FilterType::BandPass,
+            _ => FilterType::LowPass,
+        });
     }
 
     pub fn set_lfo_frequency(&mut self, freq: f32) {

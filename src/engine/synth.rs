@@ -1,3 +1,4 @@
+use crate::dsp::filter::FilterType;
 use crate::dsp::fx::delay::Delay;
 use crate::dsp::fx::FxRoute;
 use crate::dsp::lfo::Lfo;
@@ -203,6 +204,18 @@ impl Synth {
         }
     }
 
+    pub fn set_filter_resonance(&mut self, resonance: f32) {
+        for voice in self.voices.iter_mut() {
+            voice.set_filter_resonance(resonance);
+        }
+    }
+
+    pub fn set_filter_type(&mut self, filter_type: FilterType) {
+        for voice in self.voices.iter_mut() {
+            voice.set_filter_type(filter_type);
+        }
+    }
+
     pub fn set_osc1_waveform(&mut self, waveform: Waveform) {
         for voice in self.voices.iter_mut() {
             let mut params = voice.params();
@@ -318,6 +331,30 @@ mod tests {
     }
 
     #[test]
+    fn filter_resonance_propagates_to_voices() {
+        let mut synth = Synth::new(48_000.0, 4);
+
+        synth.set_filter_resonance(0.75);
+
+        assert!(synth
+            .voices
+            .iter()
+            .all(|voice| voice.filter_resonance() == 0.75));
+    }
+
+    #[test]
+    fn filter_type_propagates_to_voices() {
+        let mut synth = Synth::new(48_000.0, 4);
+
+        synth.set_filter_type(FilterType::BandPass);
+
+        assert!(synth
+            .voices
+            .iter()
+            .all(|voice| voice.filter_type() == FilterType::BandPass));
+    }
+
+    #[test]
     fn master_volume_is_clamped() {
         let mut synth = Synth::new(48_000.0, 1);
 
@@ -394,7 +431,12 @@ mod tests {
 
         synth.note_on(440.0);
 
-        synth.next_sample();
+        // discard a few warm-up samples: the first is silent (osc phase starts
+        // at 0), and the state-variable filter takes an extra sample beyond
+        // that before its low-pass output responds to nonzero input
+        for _ in 0..3 {
+            synth.next_sample();
+        }
 
         assert_ne!(synth.next_sample(), 0.0);
     }

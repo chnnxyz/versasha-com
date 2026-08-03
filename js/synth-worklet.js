@@ -84,6 +84,18 @@ class SynthProcessor extends AudioWorkletProcessor {
                         );
                         break;
 
+                    case "filter-resonance":
+                        this.synth.set_filter_resonance(
+                            Number(message.value)
+                        );
+                        break;
+
+                    case "filter-type":
+                        this.synth.set_filter_type(
+                            Number(message.value)
+                        );
+                        break;
+
                     case "lfo-frequency":
                         this.synth.set_lfo_frequency(
                             Number(message.value)
