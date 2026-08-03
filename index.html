@@ -1577,15 +1577,6 @@
                 }
             );
 
-            select.addEventListener(
-                "pointerup",
-                () => {
-                    queueMicrotask(
-                        () => select.blur()
-                    );
-                }
-            );
-
             send(
                 messageType,
                 Number(select.value)
