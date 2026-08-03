@@ -102,6 +102,27 @@
             text-transform: lowercase;
         }
 
+        #start {
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 8px 14px;
+
+            background: #000;
+            color: #fff;
+
+            cursor: pointer;
+        }
+
+        #start:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        #start:disabled {
+            cursor: default;
+            opacity: 0.5;
+        }
+
         .modules {
             display: grid;
             grid-template-columns:
@@ -426,6 +447,13 @@
     <main class="synth">
         <header>
             <h1>versasha.com</h1>
+
+            <button
+                id="start"
+                type="button"
+            >
+                Start
+            </button>
         </header>
 
         <div
@@ -1168,8 +1196,23 @@
             }
         };
 
+        const startButton =
+            document.getElementById("start");
+
         const noteDisplay =
             document.getElementById("note-display");
+
+        async function startAudio() {
+            await audio.resume();
+
+            startButton.disabled = true;
+            startButton.textContent = "Running";
+        }
+
+        startButton.addEventListener(
+            "click",
+            startAudio
+        );
 
         function send(type, value) {
             node.port.postMessage({
@@ -1621,7 +1664,7 @@
 
             heldKeys.add(key);
 
-            await audio.resume();
+            await startAudio();
 
             sendNoteOn(note.frequency);
 
