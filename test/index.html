@@ -1709,6 +1709,13 @@
                 event => {
                     event.preventDefault();
 
+                    // keep pointerup/pointercancel targeting this button even if the
+                    // finger drifts off its boundary mid-hold — without capture, a
+                    // stray pointerleave would cut the note early on real touch input
+                    button.setPointerCapture(
+                        event.pointerId
+                    );
+
                     button.classList.add(
                         "active"
                     );
@@ -1719,8 +1726,7 @@
 
             for (const type of [
                 "pointerup",
-                "pointercancel",
-                "pointerleave"
+                "pointercancel"
             ]) {
                 button.addEventListener(
                     type,
