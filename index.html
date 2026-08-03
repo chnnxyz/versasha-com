@@ -10,6 +10,30 @@
 
     <title>versasha.com</title>
 
+    <meta
+        name="description"
+        content="Sasha Ruiz de Aguirre. DJ & Producer. Browser-based music tools. Presskit and music releases."
+    >
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://versasha.com/">
+    <meta property="og:title" content="versasha.com">
+    <meta
+        property="og:description"
+        content="Sasha Ruiz de Aguirre. DJ & Producer. Browser-based music tools. Presskit and music releases."
+    >
+    <meta property="og:image" content="https://versasha.com/img/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="versasha.com">
+    <meta
+        name="twitter:description"
+        content="Sasha Ruiz de Aguirre. DJ & Producer. Browser-based music tools. Presskit and music releases."
+    >
+    <meta name="twitter:image" content="https://versasha.com/img/og-image.jpg">
+
     <link
         rel="preconnect"
         href="https://fonts.googleapis.com"
@@ -26,82 +50,12 @@
         rel="stylesheet"
     >
 
+    <link
+        rel="stylesheet"
+        href="./css/styles.css"
+    >
+
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            min-height: 100%;
-        }
-
-        body {
-            min-height: 100vh;
-            margin: 0;
-            padding: 24px;
-
-            display: grid;
-            place-items: center;
-
-            background: #000;
-            color: #fff;
-
-            font-family:
-                "JetBrains Mono",
-                monospace;
-        }
-
-        body::before {
-            content: "";
-
-            position: fixed;
-            inset: 0;
-
-            z-index: -1;
-            pointer-events: none;
-
-            background:
-                repeating-linear-gradient(
-                    to bottom,
-                    transparent 0,
-                    transparent 3px,
-                    rgba(255, 255, 255, 0.035) 3px,
-                    rgba(255, 255, 255, 0.035) 4px
-                );
-        }
-
-        button,
-        select,
-        input {
-            font: inherit;
-        }
-
-        .synth {
-            width: min(900px, 100%);
-            padding: 24px;
-
-            background: transparent;
-        }
-
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-
-            margin-bottom: 30px;
-        }
-
-        h1 {
-            margin: 0;
-
-            font-size: 22px;
-            font-weight: 400;
-            letter-spacing: 0.08em;
-            text-transform: lowercase;
-        }
-
         #start {
             border: 1px solid #fff;
             border-radius: 0;
@@ -174,12 +128,6 @@
 
             background: #000;
             color: #fff;
-        }
-
-        select:focus-visible,
-        button:focus-visible {
-            outline: 1px solid #fff;
-            outline-offset: 3px;
         }
 
         .knob-control {
@@ -423,19 +371,6 @@
         }
 
         @media (max-width: 480px) {
-            body {
-                place-items: start center;
-                padding: 12px;
-            }
-
-            .synth {
-                padding: 12px;
-            }
-
-            header {
-                align-items: flex-start;
-            }
-
             .modules {
                 grid-template-columns: 1fr;
             }
@@ -444,7 +379,7 @@
 </head>
 
 <body>
-    <main class="synth">
+    <main class="page">
         <header>
             <h1>versasha.com</h1>
 
@@ -1141,6 +1076,11 @@
                 ---
             </div>
         </div>
+
+        <nav class="site-nav">
+            <a href="./presskit.html">Presskit</a>
+            <a href="./music.html">Music</a>
+        </nav>
     </main>
 
     <script type="module">
@@ -1148,7 +1088,7 @@
             new AudioContext();
 
         const wasmResponse = await fetch(
-            "../pkg/versasha_com_bg.wasm"
+            "./pkg/versasha_com_bg.wasm"
         );
 
         if (!wasmResponse.ok) {
@@ -1164,7 +1104,7 @@
             await WebAssembly.compile(wasmBytes);
 
         await audio.audioWorklet.addModule(
-            `./synth-worklet.js?v=${Date.now()}`
+            `./js/synth-worklet.js?v=${Date.now()}`
         );
 
         const node =
