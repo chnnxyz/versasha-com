@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>versasha.com — drums (test)</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="./css/styles.css"
+    >
+
+    <style>
+        .transport {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+
+            border-bottom: 1px solid #fff;
+        }
+
+        .transport button {
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 8px 14px;
+
+            background: #000;
+            color: #fff;
+
+            cursor: pointer;
+        }
+
+        .transport button:hover,
+        .transport button.active {
+            background: #fff;
+            color: #000;
+        }
+
+        .transport label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            color: #888;
+
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .transport input,
+        .transport select {
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 6px;
+
+            background: #000;
+            color: #fff;
+
+            font: inherit;
+        }
+
+        .transport input[type="number"] {
+            width: 70px;
+        }
+
+        .sequencer {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+            margin-bottom: 30px;
+
+            overflow-x: auto;
+        }
+
+        .track-row {
+            display: flex;
+            align-items: stretch;
+            gap: 6px;
+
+            min-width: fit-content;
+        }
+
+        .track-label {
+            flex: 0 0 88px;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 0 8px;
+
+            background: #000;
+            color: #fff;
+
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            text-align: left;
+
+            cursor: pointer;
+        }
+
+        .track-label:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .track-mute,
+        .track-solo {
+            flex: 0 0 26px;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+
+            background: #000;
+            color: #888;
+
+            font-size: 11px;
+
+            cursor: pointer;
+        }
+
+        .track-mute.active {
+            background: #fff;
+            color: #000;
+        }
+
+        .track-solo.active {
+            background: #888;
+            color: #000;
+        }
+
+        .track-steps {
+            display: flex;
+            flex: 1;
+            gap: 2px;
+        }
+
+        .step-cell {
+            flex: 1;
+            aspect-ratio: 1;
+            max-width: 30px;
+
+            border: 1px solid #333;
+            border-radius: 0;
+
+            background: #000;
+
+            cursor: pointer;
+        }
+
+        .step-cell:nth-child(4n + 1) {
+            border-left: 1px solid #666;
+        }
+
+        .step-cell.active {
+            background: #888;
+        }
+
+        .step-cell.current {
+            border-color: #fff;
+        }
+
+        .step-cell.active.current {
+            background: #fff;
+        }
+
+        .knob-rack {
+            display: flex;
+            /* 4 knobs * 32px + 3 gaps * 8px = 152px of content, plus this
+               element's own 10px padding-left + 1px border-left (box-sizing:
+               border-box counts those against the flex-basis too) */
+            flex: 0 0 163px;
+            justify-content: flex-start;
+            gap: 8px;
+
+            padding-left: 10px;
+
+            border-left: 1px solid #333;
+        }
+
+        .knob {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            width: 32px;
+        }
+
+        .knob-dial {
+            --angle: -135deg;
+
+            position: relative;
+
+            width: 26px;
+            height: 26px;
+
+            border: 1px solid #fff;
+            border-radius: 50%;
+
+            background: #000;
+
+            cursor: ns-resize;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .knob-dial::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 50%;
+
+            width: 2px;
+            height: 9px;
+
+            background: #fff;
+
+            transform: translateX(-50%) rotate(var(--angle));
+            transform-origin: 50% 11px;
+        }
+
+        .knob-dial:hover,
+        .knob-dial:active {
+            border-color: #888;
+        }
+
+        .knob-dial:hover::after,
+        .knob-dial:active::after {
+            background: #888;
+        }
+
+        .knob-label {
+            margin-top: 4px;
+
+            color: #888;
+
+            font-size: 8px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        #status {
+            margin-bottom: 20px;
+
+            color: #888;
+
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <header>
+            <h1>versasha.com</h1>
+        </header>
+
+        <div id="status">
+            Loading samples…
+        </div>
+
+        <div class="transport">
+            <button id="play" type="button">Play</button>
+            <button id="pause" type="button">Pause</button>
+            <button id="stop" type="button">Stop</button>
+
+            <label>
+                BPM
+                <input id="bpm" type="number" min="20" max="300" value="120">
+            </label>
+
+            <label>
+                Master
+                <input id="master-volume" type="range" min="0" max="1" step="0.01" value="0.5">
+            </label>
+        </div>
+
+        <div class="sequencer" id="sequencer"></div>
+
+        <nav class="site-nav">
+            <a href="./index.html">Home</a>
+        </nav>
+    </main>
+
+    <script type="module">
+        const TRACKS = [
+            "Kick",
+            "Snare",
+            "Clap",
+            "Rimshot",
+            "Tom Lo",
+            "Tom Mid",
+            "Tom Hi",
+            "Hat Cl",
+            "Hat Op",
+            "Crash",
+            "Ride"
+        ];
+
+        const STEP_COUNT = 16;
+
+        // params per track, in the order their knobs should render.
+        // "level" is the only one wired to the engine so far (it maps to
+        // the existing set-track-volume message) -- the rest are drawn now
+        // and wired up once the matching DrumMachine params exist
+        const TRACK_PARAMS = [
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }, { key: "attack", label: "Atk" }, { key: "decay", label: "Dcy" }], // Kick
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }, { key: "snappy", label: "Snap" }], // Snare
+            [{ key: "level", label: "Lvl" }], // Clap
+            [{ key: "level", label: "Lvl" }], // Rimshot
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }, { key: "decay", label: "Dcy" }], // Tom Lo
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }, { key: "decay", label: "Dcy" }], // Tom Mid
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }, { key: "decay", label: "Dcy" }], // Tom Hi
+            [{ key: "level", label: "Lvl" }, { key: "decay", label: "Dcy" }], // Hat Closed
+            [{ key: "level", label: "Lvl" }, { key: "decay", label: "Dcy" }], // Hat Open
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }], // Crash
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }]  // Ride
+        ];
+
+        // 0 = Active, 1 = Solo, 2 = Muted -- mirrors SampleTrackStatus'
+        // wasm-facing encoding in src/wasm.rs
+        const trackStatus = new Array(TRACKS.length).fill(0);
+
+        const status = document.getElementById("status");
+        const sequencerEl = document.getElementById("sequencer");
+
+        const audio = new AudioContext();
+
+        async function fetchAndDecode(path) {
+            const response = await fetch(path);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${path}: ${response.status}`);
+            }
+
+            const arrayBuffer = await response.arrayBuffer();
+            const audioBuffer = await audio.decodeAudioData(arrayBuffer);
+
+            return audioBuffer.getChannelData(0);
+        }
+
+        const SAMPLE_FILES = {
+            kick: "./samples/kick.wav",
+            snare: "./samples/snare.wav",
+            clap: "./samples/clap.wav",
+            rimshot: "./samples/rimshot.wav",
+            tomLow: "./samples/tom-low.wav",
+            tomMid: "./samples/tom-mid.wav",
+            tomHi: "./samples/tom-hi.wav",
+            hihatClosed: "./samples/hihat-closed.wav",
+            hihatOpen: "./samples/hihat-open.wav",
+            crash: "./samples/crash.wav",
+            ride: "./samples/ride.wav"
+        };
+
+        const samples = {};
+
+        for (const [key, path] of Object.entries(SAMPLE_FILES)) {
+            samples[key] = await fetchAndDecode(path);
+        }
+
+        status.textContent = "Loading engine…";
+
+        const wasmResponse = await fetch("./pkg/versasha_com_bg.wasm");
+
+        if (!wasmResponse.ok) {
+            throw new Error(`Failed to fetch WASM: ${wasmResponse.status}`);
+        }
+
+        const wasmBytes = await wasmResponse.arrayBuffer();
+        const wasmModule = await WebAssembly.compile(wasmBytes);
+
+        await audio.audioWorklet.addModule(
+            `./js/drum-worklet.js?v=${Date.now()}`
+        );
+
+        const node = new AudioWorkletNode(
+            audio,
+            "drum-machine-processor",
+            {
+                numberOfInputs: 0,
+                numberOfOutputs: 1,
+                outputChannelCount: [2],
+                processorOptions: {
+                    wasmModule,
+                    samples
+                }
+            }
+        );
+
+        node.connect(audio.destination);
+
+        node.port.onmessage = event => {
+            const message = event.data;
+
+            if (message.type === "error" || message.type === "warning") {
+                console.error("[Drum machine worklet]", message.message);
+                return;
+            }
+
+            if (message.type === "step") {
+                highlightStep(message.step);
+            }
+        };
+
+        status.textContent = "Ready — press Play or click a track name";
+
+        function send(type, payload = {}) {
+            node.port.postMessage({ type, ...payload });
+        }
+
+        async function startAudio() {
+            await audio.resume();
+        }
+
+        function updateTrackButtons(row, trackIndex) {
+            const mute = row.querySelector(".track-mute");
+            const solo = row.querySelector(".track-solo");
+
+            mute.classList.toggle("active", trackStatus[trackIndex] === 2);
+            solo.classList.toggle("active", trackStatus[trackIndex] === 1);
+        }
+
+        const KNOB_MIN_ANGLE = -135;
+        const KNOB_MAX_ANGLE = 135;
+        const KNOB_DRAG_RANGE_PX = 150;
+
+        // knobs themselves only ever know a 0..1 position -- these ranges
+        // convert that into the physical units DrumMachine's setters
+        // expect. "level" and "snappy" are already 0..1 in the engine, so
+        // they're left out and passed straight through
+        const PARAM_RANGES = {
+            tune: { min: -24, max: 24 }, // semitones, matches Tune::MAX_SEMITONES
+            attack: { min: 0.001, max: 0.1 }, // seconds
+            decay: { min: 0.02, max: 1.5 } // seconds
+        };
+
+        const PARAM_MESSAGE_TYPES = {
+            level: "set-track-volume",
+            tune: "set-track-tune",
+            attack: "set-track-attack",
+            decay: "set-track-decay",
+            snappy: "set-track-snappy"
+        };
+
+        function mapKnobValue(paramKey, knobValue) {
+            const range = PARAM_RANGES[paramKey];
+            if (!range) return knobValue;
+            return range.min + knobValue * (range.max - range.min);
+        }
+
+        function formatKnobValue(paramKey, physicalValue) {
+            switch (paramKey) {
+                case "tune":
+                    return `${physicalValue >= 0 ? "+" : ""}${physicalValue.toFixed(1)}st`;
+                case "attack":
+                case "decay":
+                    return `${(physicalValue * 1000).toFixed(0)}ms`;
+                default:
+                    return physicalValue.toFixed(2);
+            }
+        }
+
+        function createKnob(param, initialValue, onChange) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "knob";
+
+            const dial = document.createElement("div");
+            dial.className = "knob-dial";
+
+            const labelEl = document.createElement("div");
+            labelEl.className = "knob-label";
+            labelEl.textContent = param.label;
+
+            let value = initialValue;
+
+            function applyValue(nextValue) {
+                value = Math.min(1, Math.max(0, nextValue));
+
+                const angle = KNOB_MIN_ANGLE + value * (KNOB_MAX_ANGLE - KNOB_MIN_ANGLE);
+                dial.style.setProperty("--angle", `${angle}deg`);
+                dial.title = `${param.label}: ${formatKnobValue(param.key, mapKnobValue(param.key, value))}`;
+            }
+
+            dial.addEventListener("pointerdown", event => {
+                dial.setPointerCapture(event.pointerId);
+
+                const startY = event.clientY;
+                const startValue = value;
+
+                function handleMove(moveEvent) {
+                    const delta = (startY - moveEvent.clientY) / KNOB_DRAG_RANGE_PX;
+                    applyValue(startValue + delta);
+                    if (onChange) onChange(value);
+                }
+
+                function handleUp() {
+                    dial.removeEventListener("pointermove", handleMove);
+                    dial.removeEventListener("pointerup", handleUp);
+                }
+
+                dial.addEventListener("pointermove", handleMove);
+                dial.addEventListener("pointerup", handleUp);
+            });
+
+            dial.addEventListener("wheel", event => {
+                event.preventDefault();
+                applyValue(value - Math.sign(event.deltaY) * 0.02);
+                if (onChange) onChange(value);
+            }, { passive: false });
+
+            dial.addEventListener("dblclick", () => {
+                applyValue(initialValue);
+                if (onChange) onChange(value);
+            });
+
+            applyValue(initialValue);
+
+            wrapper.append(dial, labelEl);
+            return wrapper;
+        }
+
+        function highlightStep(currentStep) {
+            sequencerEl.querySelectorAll(".step-cell").forEach(cell => {
+                cell.classList.toggle(
+                    "current",
+                    Number(cell.dataset.step) === currentStep
+                );
+            });
+        }
+
+        TRACKS.forEach((label, trackIndex) => {
+            const row = document.createElement("div");
+            row.className = "track-row";
+
+            const trigger = document.createElement("button");
+            trigger.type = "button";
+            trigger.className = "track-label";
+            trigger.textContent = label;
+
+            trigger.addEventListener("click", async () => {
+                await startAudio();
+                send("trigger-track", { track: trackIndex });
+            });
+
+            const mute = document.createElement("button");
+            mute.type = "button";
+            mute.className = "track-mute";
+            mute.textContent = "M";
+
+            mute.addEventListener("click", () => {
+                trackStatus[trackIndex] = trackStatus[trackIndex] === 2 ? 0 : 2;
+                updateTrackButtons(row, trackIndex);
+                send("set-track-status", {
+                    track: trackIndex,
+                    value: trackStatus[trackIndex]
+                });
+            });
+
+            const solo = document.createElement("button");
+            solo.type = "button";
+            solo.className = "track-solo";
+            solo.textContent = "S";
+
+            solo.addEventListener("click", () => {
+                trackStatus[trackIndex] = trackStatus[trackIndex] === 1 ? 0 : 1;
+                updateTrackButtons(row, trackIndex);
+                send("set-track-status", {
+                    track: trackIndex,
+                    value: trackStatus[trackIndex]
+                });
+            });
+
+            const steps = document.createElement("div");
+            steps.className = "track-steps";
+
+            for (let step = 0; step < STEP_COUNT; step++) {
+                const cell = document.createElement("button");
+                cell.type = "button";
+                cell.className = "step-cell";
+                cell.dataset.track = trackIndex;
+                cell.dataset.step = step;
+
+                cell.addEventListener("click", () => {
+                    const active = cell.classList.toggle("active");
+                    send("set-step", { step, track: trackIndex, active });
+                });
+
+                steps.appendChild(cell);
+            }
+
+            const knobRack = document.createElement("div");
+            knobRack.className = "knob-rack";
+
+            TRACK_PARAMS[trackIndex].forEach(param => {
+                const initialValue = param.key === "level" ? 1.0 : 0.5;
+
+                const onChange = value => {
+                    send(PARAM_MESSAGE_TYPES[param.key], {
+                        track: trackIndex,
+                        value: mapKnobValue(param.key, value)
+                    });
+                };
+
+                knobRack.appendChild(createKnob(param, initialValue, onChange));
+            });
+
+            row.append(trigger, mute, solo, steps, knobRack);
+            sequencerEl.appendChild(row);
+        });
+
+        document.getElementById("play").addEventListener("click", async () => {
+            await startAudio();
+            send("play");
+        });
+
+        document.getElementById("pause").addEventListener("click", () => {
+            send("pause");
+        });
+
+        document.getElementById("stop").addEventListener("click", () => {
+            send("stop");
+        });
+
+        document.getElementById("bpm").addEventListener("change", event => {
+            send("set-bpm", { value: Number(event.target.value) });
+        });
+
+        document.getElementById("master-volume").addEventListener("input", event => {
+            send("set-master-volume", { value: Number(event.target.value) });
+        });
+    </script>
+</body>
+</html>

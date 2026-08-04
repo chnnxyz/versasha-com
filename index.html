@@ -56,6 +56,41 @@
     >
 
     <style>
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .engine-tabs {
+            display: flex;
+            gap: 8px;
+
+            margin-left: auto;
+        }
+
+        .engine-tab {
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 8px 14px;
+
+            background: #000;
+            color: #fff;
+
+            cursor: pointer;
+        }
+
+        .engine-tab:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .engine-tab.active {
+            background: #fff;
+            color: #000;
+        }
+
         #start {
             border: 1px solid #fff;
             border-radius: 0;
@@ -375,6 +410,243 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .drum-status {
+            margin-bottom: 20px;
+
+            color: #888;
+
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .drum-transport {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+
+            border-bottom: 1px solid #fff;
+        }
+
+        .drum-transport button {
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 8px 14px;
+
+            background: #000;
+            color: #fff;
+
+            cursor: pointer;
+        }
+
+        .drum-transport button:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .drum-transport label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            color: #888;
+
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .drum-transport input {
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 6px;
+
+            background: #000;
+            color: #fff;
+
+            font: inherit;
+        }
+
+        .drum-transport input[type="number"] {
+            width: 70px;
+        }
+
+        .drum-sequencer {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+            margin-bottom: 30px;
+
+            overflow-x: auto;
+        }
+
+        .drum-track-row {
+            display: flex;
+            align-items: stretch;
+            gap: 6px;
+
+            min-width: fit-content;
+        }
+
+        .drum-track-label {
+            flex: 0 0 88px;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 0 8px;
+
+            background: #000;
+            color: #fff;
+
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            text-align: left;
+
+            cursor: pointer;
+        }
+
+        .drum-track-label:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .drum-track-mute,
+        .drum-track-solo {
+            flex: 0 0 26px;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+
+            background: #000;
+            color: #888;
+
+            font-size: 11px;
+
+            cursor: pointer;
+        }
+
+        .drum-track-mute.active {
+            background: #fff;
+            color: #000;
+        }
+
+        .drum-track-solo.active {
+            background: #888;
+            color: #000;
+        }
+
+        .drum-track-steps {
+            display: flex;
+            flex: 1;
+            gap: 2px;
+        }
+
+        .drum-step-cell {
+            flex: 1;
+            aspect-ratio: 1;
+            max-width: 30px;
+
+            border: 1px solid #333;
+            border-radius: 0;
+
+            background: #000;
+
+            cursor: pointer;
+        }
+
+        .drum-step-cell:nth-child(4n + 1) {
+            border-left: 1px solid #666;
+        }
+
+        .drum-step-cell.active {
+            background: #888;
+        }
+
+        .drum-step-cell.current {
+            border-color: #fff;
+        }
+
+        .drum-step-cell.active.current {
+            background: #fff;
+        }
+
+        .drum-knob-rack {
+            display: flex;
+            flex: 0 0 163px;
+            justify-content: flex-start;
+            gap: 8px;
+
+            padding-left: 10px;
+
+            border-left: 1px solid #333;
+        }
+
+        .drum-knob {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            width: 32px;
+        }
+
+        .drum-knob-dial {
+            --angle: -135deg;
+
+            position: relative;
+
+            width: 26px;
+            height: 26px;
+
+            border: 1px solid #fff;
+            border-radius: 50%;
+
+            background: #000;
+
+            cursor: ns-resize;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .drum-knob-dial::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 50%;
+
+            width: 2px;
+            height: 9px;
+
+            background: #fff;
+
+            transform: translateX(-50%) rotate(var(--angle));
+            transform-origin: 50% 11px;
+        }
+
+        .drum-knob-dial:hover,
+        .drum-knob-dial:active {
+            border-color: #888;
+        }
+
+        .drum-knob-dial:hover::after,
+        .drum-knob-dial:active::after {
+            background: #888;
+        }
+
+        .drum-knob-label {
+            margin-top: 4px;
+
+            color: #888;
+
+            font-size: 8px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 
@@ -382,6 +654,11 @@
     <main class="page">
         <header>
             <h1>versasha.com</h1>
+
+            <nav class="engine-tabs" role="tablist">
+                <button type="button" class="engine-tab active" data-view="synth" role="tab" aria-selected="true">Synth</button>
+                <button type="button" class="engine-tab" data-view="drums" role="tab" aria-selected="false">Drums</button>
+            </nav>
 
             <button
                 id="start"
@@ -391,6 +668,7 @@
             </button>
         </header>
 
+        <div id="synth-view" class="view">
         <div
             class="mobile-keys"
             id="mobile-keys"
@@ -1148,6 +1426,31 @@
                 ---
             </div>
         </div>
+        </div>
+
+        <div id="drums-view" class="view" hidden>
+            <div id="drum-status" class="drum-status">
+                Loading samples…
+            </div>
+
+            <div class="drum-transport">
+                <button id="drum-play" type="button">Play</button>
+                <button id="drum-pause" type="button">Pause</button>
+                <button id="drum-stop" type="button">Stop</button>
+
+                <label>
+                    BPM
+                    <input id="drum-bpm" type="number" min="20" max="300" value="120">
+                </label>
+
+                <label>
+                    Master
+                    <input id="drum-master-volume" type="range" min="0" max="1" step="0.01" value="0.5">
+                </label>
+            </div>
+
+            <div class="drum-sequencer" id="drum-sequencer"></div>
+        </div>
 
         <nav class="site-nav">
             <a href="./presskit.html">Presskit</a>
@@ -1808,6 +2111,353 @@
                 }
             }
         );
+
+        // --- Drum machine (Drums tab) --------------------------------------
+        //
+        // Reuses the same AudioContext (`audio`) and already-compiled
+        // `wasmModule` from the synth setup above -- both worklet nodes end
+        // up connected to the same audio.destination, so the drum sequencer
+        // keeps playing in the background regardless of which tab is
+        // visible, and the synth can be played live right on top of it.
+
+        const DRUM_TRACKS = [
+            "Kick", "Snare", "Clap", "Rimshot",
+            "Tom Lo", "Tom Mid", "Tom Hi",
+            "Hat Cl", "Hat Op", "Crash", "Ride"
+        ];
+
+        const DRUM_STEP_COUNT = 16;
+
+        // params per track, in the order their knobs should render --
+        // mirrors DrumMachine's build_all_tracks order and SampleTrackType's
+        // supports_tune/envelope/attack/snappy gating in sample_track.rs
+        const DRUM_TRACK_PARAMS = [
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }, { key: "attack", label: "Atk" }, { key: "decay", label: "Dcy" }],
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }, { key: "snappy", label: "Snap" }],
+            [{ key: "level", label: "Lvl" }],
+            [{ key: "level", label: "Lvl" }],
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }, { key: "decay", label: "Dcy" }],
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }, { key: "decay", label: "Dcy" }],
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }, { key: "decay", label: "Dcy" }],
+            [{ key: "level", label: "Lvl" }, { key: "decay", label: "Dcy" }],
+            [{ key: "level", label: "Lvl" }, { key: "decay", label: "Dcy" }],
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }],
+            [{ key: "level", label: "Lvl" }, { key: "tune", label: "Tune" }]
+        ];
+
+        const drumTrackStatus = new Array(DRUM_TRACKS.length).fill(0);
+
+        const drumStatus = document.getElementById("drum-status");
+        const drumSequencerEl = document.getElementById("drum-sequencer");
+
+        async function fetchAndDecodeDrumSample(path) {
+            const response = await fetch(path);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${path}: ${response.status}`);
+            }
+
+            const arrayBuffer = await response.arrayBuffer();
+            const audioBuffer = await audio.decodeAudioData(arrayBuffer);
+
+            return audioBuffer.getChannelData(0);
+        }
+
+        const DRUM_SAMPLE_FILES = {
+            kick: "./samples/kick.wav",
+            snare: "./samples/snare.wav",
+            clap: "./samples/clap.wav",
+            rimshot: "./samples/rimshot.wav",
+            tomLow: "./samples/tom-low.wav",
+            tomMid: "./samples/tom-mid.wav",
+            tomHi: "./samples/tom-hi.wav",
+            hihatClosed: "./samples/hihat-closed.wav",
+            hihatOpen: "./samples/hihat-open.wav",
+            crash: "./samples/crash.wav",
+            ride: "./samples/ride.wav"
+        };
+
+        const drumSamples = {};
+
+        for (const [key, path] of Object.entries(DRUM_SAMPLE_FILES)) {
+            drumSamples[key] = await fetchAndDecodeDrumSample(path);
+        }
+
+        drumStatus.textContent = "Loading engine…";
+
+        await audio.audioWorklet.addModule(
+            `./js/drum-worklet.js?v=${Date.now()}`
+        );
+
+        const drumNode = new AudioWorkletNode(
+            audio,
+            "drum-machine-processor",
+            {
+                numberOfInputs: 0,
+                numberOfOutputs: 1,
+                outputChannelCount: [2],
+                processorOptions: {
+                    wasmModule,
+                    samples: drumSamples
+                }
+            }
+        );
+
+        drumNode.connect(audio.destination);
+
+        drumNode.port.onmessage = event => {
+            const message = event.data;
+
+            if (message.type === "error" || message.type === "warning") {
+                console.error("[Drum machine worklet]", message.message);
+                return;
+            }
+
+            if (message.type === "step") {
+                highlightDrumStep(message.step);
+            }
+        };
+
+        drumStatus.textContent = "Ready — press Play or click a track name";
+
+        function sendDrum(type, payload = {}) {
+            drumNode.port.postMessage({ type, ...payload });
+        }
+
+        function updateDrumTrackButtons(row, trackIndex) {
+            const mute = row.querySelector(".drum-track-mute");
+            const solo = row.querySelector(".drum-track-solo");
+
+            mute.classList.toggle("active", drumTrackStatus[trackIndex] === 2);
+            solo.classList.toggle("active", drumTrackStatus[trackIndex] === 1);
+        }
+
+        const DRUM_KNOB_MIN_ANGLE = -135;
+        const DRUM_KNOB_MAX_ANGLE = 135;
+        const DRUM_KNOB_DRAG_RANGE_PX = 150;
+
+        // knobs only ever know a 0..1 position -- these ranges convert that
+        // into the physical units DrumMachine's setters expect. "level" and
+        // "snappy" are already 0..1 in the engine, so they're left out and
+        // passed straight through
+        const DRUM_PARAM_RANGES = {
+            tune: { min: -24, max: 24 }, // semitones, matches Tune::MAX_SEMITONES
+            attack: { min: 0.001, max: 0.1 }, // seconds
+            decay: { min: 0.02, max: 1.5 } // seconds
+        };
+
+        const DRUM_PARAM_MESSAGE_TYPES = {
+            level: "set-track-volume",
+            tune: "set-track-tune",
+            attack: "set-track-attack",
+            decay: "set-track-decay",
+            snappy: "set-track-snappy"
+        };
+
+        function mapDrumKnobValue(paramKey, knobValue) {
+            const range = DRUM_PARAM_RANGES[paramKey];
+            if (!range) return knobValue;
+            return range.min + knobValue * (range.max - range.min);
+        }
+
+        function formatDrumKnobValue(paramKey, physicalValue) {
+            switch (paramKey) {
+                case "tune":
+                    return `${physicalValue >= 0 ? "+" : ""}${physicalValue.toFixed(1)}st`;
+                case "attack":
+                case "decay":
+                    return `${(physicalValue * 1000).toFixed(0)}ms`;
+                default:
+                    return physicalValue.toFixed(2);
+            }
+        }
+
+        function createDrumKnob(param, initialValue, onChange) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "drum-knob";
+
+            const dial = document.createElement("div");
+            dial.className = "drum-knob-dial";
+
+            const labelEl = document.createElement("div");
+            labelEl.className = "drum-knob-label";
+            labelEl.textContent = param.label;
+
+            let value = initialValue;
+
+            function applyValue(nextValue) {
+                value = Math.min(1, Math.max(0, nextValue));
+
+                const angle = DRUM_KNOB_MIN_ANGLE + value * (DRUM_KNOB_MAX_ANGLE - DRUM_KNOB_MIN_ANGLE);
+                dial.style.setProperty("--angle", `${angle}deg`);
+                dial.title = `${param.label}: ${formatDrumKnobValue(param.key, mapDrumKnobValue(param.key, value))}`;
+            }
+
+            dial.addEventListener("pointerdown", event => {
+                dial.setPointerCapture(event.pointerId);
+
+                const startY = event.clientY;
+                const startValue = value;
+
+                function handleMove(moveEvent) {
+                    const delta = (startY - moveEvent.clientY) / DRUM_KNOB_DRAG_RANGE_PX;
+                    applyValue(startValue + delta);
+                    if (onChange) onChange(value);
+                }
+
+                function handleUp() {
+                    dial.removeEventListener("pointermove", handleMove);
+                    dial.removeEventListener("pointerup", handleUp);
+                }
+
+                dial.addEventListener("pointermove", handleMove);
+                dial.addEventListener("pointerup", handleUp);
+            });
+
+            dial.addEventListener("wheel", event => {
+                event.preventDefault();
+                applyValue(value - Math.sign(event.deltaY) * 0.02);
+                if (onChange) onChange(value);
+            }, { passive: false });
+
+            dial.addEventListener("dblclick", () => {
+                applyValue(initialValue);
+                if (onChange) onChange(value);
+            });
+
+            applyValue(initialValue);
+
+            wrapper.append(dial, labelEl);
+            return wrapper;
+        }
+
+        function highlightDrumStep(currentStep) {
+            drumSequencerEl.querySelectorAll(".drum-step-cell").forEach(cell => {
+                cell.classList.toggle(
+                    "current",
+                    Number(cell.dataset.step) === currentStep
+                );
+            });
+        }
+
+        DRUM_TRACKS.forEach((label, trackIndex) => {
+            const row = document.createElement("div");
+            row.className = "drum-track-row";
+
+            const trigger = document.createElement("button");
+            trigger.type = "button";
+            trigger.className = "drum-track-label";
+            trigger.textContent = label;
+
+            trigger.addEventListener("click", async () => {
+                await startAudio();
+                sendDrum("trigger-track", { track: trackIndex });
+            });
+
+            const mute = document.createElement("button");
+            mute.type = "button";
+            mute.className = "drum-track-mute";
+            mute.textContent = "M";
+
+            mute.addEventListener("click", () => {
+                drumTrackStatus[trackIndex] = drumTrackStatus[trackIndex] === 2 ? 0 : 2;
+                updateDrumTrackButtons(row, trackIndex);
+                sendDrum("set-track-status", { track: trackIndex, value: drumTrackStatus[trackIndex] });
+            });
+
+            const solo = document.createElement("button");
+            solo.type = "button";
+            solo.className = "drum-track-solo";
+            solo.textContent = "S";
+
+            solo.addEventListener("click", () => {
+                drumTrackStatus[trackIndex] = drumTrackStatus[trackIndex] === 1 ? 0 : 1;
+                updateDrumTrackButtons(row, trackIndex);
+                sendDrum("set-track-status", { track: trackIndex, value: drumTrackStatus[trackIndex] });
+            });
+
+            const steps = document.createElement("div");
+            steps.className = "drum-track-steps";
+
+            for (let step = 0; step < DRUM_STEP_COUNT; step++) {
+                const cell = document.createElement("button");
+                cell.type = "button";
+                cell.className = "drum-step-cell";
+                cell.dataset.track = trackIndex;
+                cell.dataset.step = step;
+
+                cell.addEventListener("click", () => {
+                    const active = cell.classList.toggle("active");
+                    sendDrum("set-step", { step, track: trackIndex, active });
+                });
+
+                steps.appendChild(cell);
+            }
+
+            const knobRack = document.createElement("div");
+            knobRack.className = "drum-knob-rack";
+
+            DRUM_TRACK_PARAMS[trackIndex].forEach(param => {
+                const initialValue = param.key === "level" ? 1.0 : 0.5;
+
+                const onChange = value => {
+                    sendDrum(DRUM_PARAM_MESSAGE_TYPES[param.key], {
+                        track: trackIndex,
+                        value: mapDrumKnobValue(param.key, value)
+                    });
+                };
+
+                knobRack.appendChild(createDrumKnob(param, initialValue, onChange));
+            });
+
+            row.append(trigger, mute, solo, steps, knobRack);
+            drumSequencerEl.appendChild(row);
+        });
+
+        document.getElementById("drum-play").addEventListener("click", async () => {
+            await startAudio();
+            sendDrum("play");
+        });
+
+        document.getElementById("drum-pause").addEventListener("click", () => {
+            sendDrum("pause");
+        });
+
+        document.getElementById("drum-stop").addEventListener("click", () => {
+            sendDrum("stop");
+        });
+
+        document.getElementById("drum-bpm").addEventListener("change", event => {
+            sendDrum("set-bpm", { value: Number(event.target.value) });
+        });
+
+        document.getElementById("drum-master-volume").addEventListener("input", event => {
+            sendDrum("set-master-volume", { value: Number(event.target.value) });
+        });
+
+        // --- Tab switching (Synth / Drums) ----------------------------------
+        //
+        // Only toggles which view is visible -- both worklet nodes stay
+        // connected and processing regardless, so switching tabs never
+        // interrupts either engine's audio
+
+        const synthView = document.getElementById("synth-view");
+        const drumsView = document.getElementById("drums-view");
+        const engineTabs = document.querySelectorAll(".engine-tab");
+
+        engineTabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                const view = tab.dataset.view;
+
+                synthView.hidden = view !== "synth";
+                drumsView.hidden = view !== "drums";
+
+                engineTabs.forEach(other => {
+                    other.classList.toggle("active", other === tab);
+                    other.setAttribute("aria-selected", other === tab ? "true" : "false");
+                });
+            });
+        });
     </script>
 </body>
 </html>
