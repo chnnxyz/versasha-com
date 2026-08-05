@@ -2,14 +2,16 @@ use crate::drums::audio_sample::AudioSample;
 use crate::drums::sample_track::{SampleTrack, SampleTrackStatus, SampleTrackType};
 use crate::drums::sequencer::Sequencer;
 use crate::dsp::types::SampleRate;
+use crate::sequencing::transport::SequencerStatus;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SequencerStatus {
-    Play,
-    Pause,
-    Stop,
-}
-
+// TODO(session-refactor): once engine::session::Session exists and owns a
+// shared sequencing::transport::Transport, this field plus
+// play()/pause()/stop()/bpm()/set_bpm()/current_step()/sequencer_status()
+// below and the advance-and-trigger block at the top of next_sample()
+// all become redundant -- that responsibility moves to Transport, and
+// DrumMachine gets driven via trigger_step() instead. Left in place for
+// now so DrumMachine keeps working standalone (drums.html) until that
+// switch actually happens.
 pub struct DrumMachine {
     sequencer_status: SequencerStatus,
     sequencer: Sequencer,
@@ -205,7 +207,9 @@ impl DrumMachine {
     // support this param" distinction into the wrong layer -- flatten it,
     // since callers here only need "is there a usable value or not"
     pub fn track_tune(&self, index: usize) -> Option<f32> {
-        self.tracks.get(index).and_then(|track| track.tune_semitones())
+        self.tracks
+            .get(index)
+            .and_then(|track| track.tune_semitones())
     }
 
     pub fn track_attack(&self, index: usize) -> Option<f32> {
@@ -319,6 +323,22 @@ impl DrumMachine {
         // indexing, so a bad key mapping can't panic the audio thread
         if let Some(track) = self.tracks.get_mut(index) {
             track.trigger();
+        }
+    }
+
+    // TODO(session-refactor): the method a shared Transport will call
+    // when it crosses a step boundary. Same trigger loop as the one
+    // inlined at the top of next_sample() below, reading an
+    // externally-supplied step instead of advancing its own clock.
+    pub fn trigger_step(&mut self, step: usize) {
+        if step < self.sequencer.step_count() {
+            let active_tracks = self.sequencer.tracks_at(step);
+
+            for (index, &is_active) in active_tracks.iter().enumerate() {
+                if is_active {
+                    self.tracks[index].trigger();
+                }
+            }
         }
     }
 
@@ -650,6 +670,43 @@ mod tests {
     }
 
     #[test]
+    fn trigger_step_fires_flagged_tracks_at_a_given_step() {
+        let mut machine = test_machine();
+
+        for _ in 0..3 {
+            machine.next_sample(); // drain everything to silence first
+        }
+
+        machine.set_step(5, 0, true); // kick flagged on step 5, clock never gets there
+
+        machine.trigger_step(5);
+
+        let output = machine.next_sample();
+
+        // every other track is still silent from the drain above
+        assert_approx_eq(output, 7.0 * 1.0 * 0.5);
+    }
+
+    #[test]
+    fn trigger_step_ignores_out_of_range_step() {
+        let mut machine = test_machine();
+
+        // must not panic
+        machine.trigger_step(999);
+    }
+
+    #[test]
+    fn trigger_step_does_not_move_current_step() {
+        let mut machine = test_machine();
+
+        // reads an externally-supplied step -- it must not advance
+        // self.sequencer's own clock as a side effect
+        machine.trigger_step(3);
+
+        assert_eq!(machine.current_step(), 0);
+    }
+
+    #[test]
     fn solo_restricts_mix_to_soloed_tracks_only() {
         let mut machine = test_machine();
 
@@ -669,7 +726,7 @@ mod tests {
 
         machine.set_master_volume(0.25);
 
-        // Kick/Tom/HiHat tracks now carry a DrumEnvelope that starts Idle
+        // Kick/Tom/HiHat tracks now carry an ADEnvelope that starts Idle
         // (silent) until triggered, unlike SamplePlayer which is always
         // "live" from position 0 -- trigger every track explicitly so
         // this test still measures the full 11-track mix
@@ -679,7 +736,7 @@ mod tests {
 
         let output = machine.next_sample();
 
-        // at this sample rate DrumEnvelope's default attack completes
+        // at this sample rate ADEnvelope's default attack completes
         // within a single sample, so every track is at full level here
         assert_approx_eq(output, 7.0 * 11.0 * 0.25);
     }
@@ -692,7 +749,7 @@ mod tests {
             machine.next_sample(); // drain everything to silence first
         }
 
-        // snare (index 1), not kick: it has no DrumEnvelope, so both of
+        // snare (index 1), not kick: it has no ADEnvelope on it, so both of
         // its raw samples play back at the same level and this test stays
         // focused purely on play/pause/ring-out timing
         machine.set_step(1, 1, true);

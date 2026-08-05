@@ -1,7 +1,5 @@
-use super::types::{
-    DEFAULT_FREQ, DEFAULT_PHASE, DEFAULT_SAMPLE_RATE, Frequency, Phase, Sample, SampleRate,
-};
-use super::waveform::Waveform;
+use crate::dsp::oscillators::waveform::Waveform;
+use crate::dsp::types::{DEFAULT_FREQ, DEFAULT_PHASE, Frequency, Phase, Sample, SampleRate};
 
 #[derive(Clone)]
 pub struct PhaseGenerator {
@@ -108,6 +106,7 @@ impl PhaseGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dsp::types::DEFAULT_SAMPLE_RATE;
 
     const EPSILON: f32 = 1e-6;
 

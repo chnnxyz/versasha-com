@@ -1,6 +1,6 @@
 use crate::dsp::types::Sample;
 
-const MAX_SEMITONES: Sample = 24.0; // +/- 2 octaves -- a generous but sane trim range for a drum voice
+const MAX_SEMITONES: Sample = 24.0; // +/- 2 octaves -- a generous but sane trim range
 
 pub struct Tune {
     semitones: Sample,

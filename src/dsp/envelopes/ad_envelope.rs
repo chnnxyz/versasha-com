@@ -1,7 +1,7 @@
 use crate::dsp::types::{Sample, SampleRate, Time};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DrumEnvelopeState {
+pub enum ADEnvelopeState {
     Idle,
     Attack,
     Decay,
@@ -18,8 +18,8 @@ const DEFAULT_DECAY: Time = 0.2;
 // further, and it gives next_sample() a concrete point to snap to Idle
 const SILENCE_FLOOR: Sample = 0.001;
 
-pub struct DrumEnvelope {
-    state: DrumEnvelopeState,
+pub struct ADEnvelope {
+    state: ADEnvelopeState,
     level: Sample,
 
     attack_time: Time,
@@ -30,10 +30,10 @@ pub struct DrumEnvelope {
     decay_coefficient: Sample,
 }
 
-impl DrumEnvelope {
+impl ADEnvelope {
     pub fn new(sample_rate: SampleRate) -> Self {
         let mut envelope = Self {
-            state: DrumEnvelopeState::Idle,
+            state: ADEnvelopeState::Idle,
             level: 0.0,
             attack_time: DEFAULT_ATTACK,
             decay_time: DEFAULT_DECAY,
@@ -60,7 +60,7 @@ impl DrumEnvelope {
     }
 
     // getters
-    pub fn state(&self) -> DrumEnvelopeState {
+    pub fn state(&self) -> ADEnvelopeState {
         self.state
     }
 
@@ -90,30 +90,30 @@ impl DrumEnvelope {
     // hard reset as in SamplePlayer::trigger()
     pub fn trigger(&mut self) {
         self.level = 0.0;
-        self.state = DrumEnvelopeState::Attack;
+        self.state = ADEnvelopeState::Attack;
     }
 
     pub fn next_sample(&mut self) -> Sample {
         match self.state {
-            DrumEnvelopeState::Idle => {
+            ADEnvelopeState::Idle => {
                 self.level = 0.0;
             }
 
-            DrumEnvelopeState::Attack => {
+            ADEnvelopeState::Attack => {
                 self.level += self.attack_increment;
 
                 if self.level >= 1.0 {
                     self.level = 1.0;
-                    self.state = DrumEnvelopeState::Decay;
+                    self.state = ADEnvelopeState::Decay;
                 }
             }
 
-            DrumEnvelopeState::Decay => {
+            ADEnvelopeState::Decay => {
                 self.level *= self.decay_coefficient;
 
                 if self.level <= SILENCE_FLOOR {
                     self.level = 0.0;
-                    self.state = DrumEnvelopeState::Idle;
+                    self.state = ADEnvelopeState::Idle;
                 }
             }
         }
@@ -122,7 +122,7 @@ impl DrumEnvelope {
     }
 
     pub fn reset(&mut self) {
-        self.state = DrumEnvelopeState::Idle;
+        self.state = ADEnvelopeState::Idle;
         self.level = 0.0;
     }
 }
@@ -144,26 +144,26 @@ mod tests {
 
     #[test]
     fn starts_idle_and_silent() {
-        let env = DrumEnvelope::new(48_000.0);
+        let env = ADEnvelope::new(48_000.0);
 
-        assert_eq!(env.state(), DrumEnvelopeState::Idle);
+        assert_eq!(env.state(), ADEnvelopeState::Idle);
         assert_eq!(env.level(), 0.0);
     }
 
     #[test]
     fn trigger_enters_attack_from_zero() {
-        let mut env = DrumEnvelope::new(48_000.0);
+        let mut env = ADEnvelope::new(48_000.0);
 
         env.trigger();
 
-        assert_eq!(env.state(), DrumEnvelopeState::Attack);
+        assert_eq!(env.state(), ADEnvelopeState::Attack);
         assert_eq!(env.level(), 0.0);
     }
 
     #[test]
     fn attack_reaches_full_level_then_moves_to_decay() {
         let sample_rate = 48_000.0;
-        let mut env = DrumEnvelope::new(sample_rate);
+        let mut env = ADEnvelope::new(sample_rate);
 
         env.set_attack_time(0.01);
         env.trigger();
@@ -175,12 +175,12 @@ mod tests {
         }
 
         assert_approx_eq(env.level(), 1.0);
-        assert_eq!(env.state(), DrumEnvelopeState::Decay);
+        assert_eq!(env.state(), ADEnvelopeState::Decay);
     }
 
     #[test]
     fn attack_is_monotonically_increasing() {
-        let mut env = DrumEnvelope::new(48_000.0);
+        let mut env = ADEnvelope::new(48_000.0);
 
         env.set_attack_time(0.05);
         env.trigger();
@@ -199,7 +199,7 @@ mod tests {
     #[test]
     fn decay_falls_to_silence_and_returns_to_idle() {
         let sample_rate = 48_000.0;
-        let mut env = DrumEnvelope::new(sample_rate);
+        let mut env = ADEnvelope::new(sample_rate);
 
         env.set_attack_time(0.001);
         env.set_decay_time(0.05);
@@ -210,12 +210,12 @@ mod tests {
         }
 
         assert_eq!(env.level(), 0.0);
-        assert_eq!(env.state(), DrumEnvelopeState::Idle);
+        assert_eq!(env.state(), ADEnvelopeState::Idle);
     }
 
     #[test]
     fn decay_is_monotonically_decreasing() {
-        let mut env = DrumEnvelope::new(48_000.0);
+        let mut env = ADEnvelope::new(48_000.0);
 
         env.set_attack_time(0.001);
         env.set_decay_time(0.2);
@@ -239,7 +239,7 @@ mod tests {
 
     #[test]
     fn retrigger_restarts_cleanly_even_mid_decay() {
-        let mut env = DrumEnvelope::new(48_000.0);
+        let mut env = ADEnvelope::new(48_000.0);
 
         env.set_attack_time(0.001);
         env.set_decay_time(0.2);
@@ -249,11 +249,11 @@ mod tests {
             env.next_sample();
         }
 
-        assert_eq!(env.state(), DrumEnvelopeState::Decay);
+        assert_eq!(env.state(), ADEnvelopeState::Decay);
 
         env.trigger();
 
-        assert_eq!(env.state(), DrumEnvelopeState::Attack);
+        assert_eq!(env.state(), ADEnvelopeState::Attack);
         assert_eq!(env.level(), 0.0);
     }
 
@@ -261,12 +261,12 @@ mod tests {
     fn shorter_decay_time_reaches_silence_sooner() {
         let sample_rate = 48_000.0;
 
-        let mut short = DrumEnvelope::new(sample_rate);
+        let mut short = ADEnvelope::new(sample_rate);
         short.set_attack_time(0.001);
         short.set_decay_time(0.05);
         short.trigger();
 
-        let mut long = DrumEnvelope::new(sample_rate);
+        let mut long = ADEnvelope::new(sample_rate);
         long.set_attack_time(0.001);
         long.set_decay_time(0.5);
         long.trigger();
@@ -288,7 +288,7 @@ mod tests {
 
     #[test]
     fn set_attack_time_rejects_non_positive_values() {
-        let mut env = DrumEnvelope::new(48_000.0);
+        let mut env = ADEnvelope::new(48_000.0);
 
         env.set_attack_time(-1.0);
 
@@ -297,7 +297,7 @@ mod tests {
 
     #[test]
     fn set_decay_time_rejects_non_positive_values() {
-        let mut env = DrumEnvelope::new(48_000.0);
+        let mut env = ADEnvelope::new(48_000.0);
 
         env.set_decay_time(0.0);
 

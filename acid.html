@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>versasha.com — acid (test)</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="./css/styles.css"
+    >
+
+    <style>
+        #status {
+            margin-bottom: 20px;
+
+            color: #888;
+
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .transport {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+
+            border-bottom: 1px solid #fff;
+        }
+
+        .transport button {
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 8px 14px;
+
+            background: #000;
+            color: #fff;
+
+            cursor: pointer;
+        }
+
+        .transport button:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .transport label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            color: #888;
+
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .transport input {
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 6px;
+
+            background: #000;
+            color: #fff;
+
+            font: inherit;
+        }
+
+        .transport input[type="number"] {
+            width: 70px;
+        }
+
+        /* --- step sequencer -------------------------------------------- */
+
+        .acid-sequencer {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+
+            overflow-x: auto;
+
+            border-bottom: 1px solid #fff;
+        }
+
+        .acid-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+
+            flex: 0 0 auto;
+        }
+
+        .acid-step-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 36px;
+            height: 36px;
+
+            border: 1px solid #333;
+            border-radius: 0;
+
+            background: #000;
+            color: #888;
+
+            font-size: 8px;
+
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .acid-step-note {
+            width: 44px;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 3px 2px;
+
+            background: #000;
+            color: #fff;
+
+            font: inherit;
+            font-size: 8px;
+            text-align: center;
+            text-align-last: center;
+        }
+
+        .acid-step-cell.active {
+            background: #888;
+            color: #000;
+        }
+
+        .acid-step-cell.current {
+            border-color: #fff;
+        }
+
+        .acid-step-cell.active.current {
+            background: #fff;
+            color: #000;
+        }
+
+        .acid-step-flags {
+            display: flex;
+            width: 44px;
+            gap: 2px;
+        }
+
+        .acid-step-flag {
+            flex: 1;
+            height: 16px;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+
+            background: #000;
+            color: #888;
+
+            font-size: 8px;
+            line-height: 1;
+
+            cursor: pointer;
+        }
+
+        .acid-step-flag.active {
+            background: #fff;
+            color: #000;
+        }
+
+        /* --- knob modules (same system as index.html's synth) ---------- */
+
+        .modules {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .module {
+            min-width: 0;
+
+            border-top: 1px solid #fff;
+            padding-top: 12px;
+        }
+
+        .module h2 {
+            margin: 0 0 18px;
+
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .field {
+            margin-bottom: 22px;
+        }
+
+        .field:last-child {
+            margin-bottom: 0;
+        }
+
+        .field-label {
+            display: block;
+            margin-bottom: 8px;
+
+            color: #888;
+
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        select {
+            width: 100%;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 7px;
+
+            background: #000;
+            color: #fff;
+        }
+
+        .knob-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            user-select: none;
+        }
+
+        .knob {
+            position: relative;
+
+            width: 76px;
+            height: 66px;
+
+            cursor: ns-resize;
+            touch-action: none;
+        }
+
+        .knob-arc {
+            position: absolute;
+            inset: 0;
+
+            width: 76px;
+            height: 66px;
+
+            overflow: visible;
+            pointer-events: none;
+        }
+
+        .knob-track,
+        .knob-value-arc {
+            fill: none;
+
+            stroke-width: 2;
+            stroke-linecap: butt;
+
+            transform-origin: 38px 38px;
+            transform: rotate(135deg);
+        }
+
+        .knob-track {
+            stroke: #333;
+        }
+
+        .knob-value-arc {
+            stroke: #fff;
+
+            stroke-dasharray: 212.06;
+            stroke-dashoffset: calc(212.06 - 212.06 * var(--normalized));
+        }
+
+        .indicator {
+            position: absolute;
+            left: 50%;
+            top: 10px;
+
+            width: 1px;
+            height: 28px;
+
+            background: #fff;
+
+            transform: translateX(-50%) rotate(calc(-135deg + var(--normalized) * 270deg));
+            transform-origin: 50% 28px;
+        }
+
+        .knob-center {
+            position: absolute;
+
+            left: 50%;
+            top: 37px;
+
+            width: 3px;
+            height: 3px;
+
+            background: #fff;
+
+            transform: translate(-50%, -50%);
+        }
+
+        .knob input {
+            position: absolute;
+
+            width: 1px;
+            height: 1px;
+
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .knob-name {
+            margin-top: 9px;
+
+            color: #888;
+
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .knob-value {
+            margin-top: 4px;
+
+            color: #fff;
+
+            font-size: 11px;
+        }
+
+        @media (max-width: 760px) {
+            .modules {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            .modules {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <header>
+            <h1>versasha.com</h1>
+        </header>
+
+        <div id="status">
+            Loading engine…
+        </div>
+
+        <div class="transport">
+            <button id="play" type="button">Play</button>
+            <button id="pause" type="button">Pause</button>
+            <button id="stop" type="button">Stop</button>
+
+            <label>
+                BPM
+                <input id="bpm" type="number" min="20" max="300" value="120">
+            </label>
+        </div>
+
+        <div class="acid-sequencer" id="acid-sequencer"></div>
+
+        <div class="modules">
+            <section class="module">
+                <h2>Oscillator</h2>
+
+                <div class="field">
+                    <label class="field-label" for="waveform">Waveform</label>
+
+                    <select id="waveform">
+                        <option value="2">Saw</option>
+                        <option value="1">Square</option>
+                    </select>
+                </div>
+
+                <div class="knob-control" data-knob data-input="tuning" data-output="tuning-value">
+                    <div class="knob">
+                        <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                            <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input id="tuning" type="range" min="-24" max="24" step="1" value="0">
+                    </div>
+
+                    <div class="knob-name">Tuning</div>
+                    <output id="tuning-value" class="knob-value">+0 st</output>
+                </div>
+            </section>
+
+            <section class="module">
+                <h2>Filter</h2>
+
+                <div class="knob-control" data-knob data-input="cutoff" data-output="cutoff-value">
+                    <div class="knob">
+                        <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                            <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input id="cutoff" type="range" min="0" max="1" step="0.001" value="0.5">
+                    </div>
+
+                    <div class="knob-name">Cutoff</div>
+                    <output id="cutoff-value" class="knob-value">800 Hz</output>
+                </div>
+
+                <div class="knob-control" data-knob data-input="resonance" data-output="resonance-value">
+                    <div class="knob">
+                        <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                            <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input id="resonance" type="range" min="0" max="1" step="0.01" value="0.3">
+                    </div>
+
+                    <div class="knob-name">Resonance</div>
+                    <output id="resonance-value" class="knob-value">0.30</output>
+                </div>
+            </section>
+
+            <section class="module">
+                <h2>Envelope</h2>
+
+                <div class="knob-control" data-knob data-input="env-mod" data-output="env-mod-value">
+                    <div class="knob">
+                        <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                            <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input id="env-mod" type="range" min="0" max="1" step="0.01" value="0.5">
+                    </div>
+
+                    <div class="knob-name">Env Mod</div>
+                    <output id="env-mod-value" class="knob-value">0.50</output>
+                </div>
+
+                <div class="knob-control" data-knob data-input="decay" data-output="decay-value">
+                    <div class="knob">
+                        <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                            <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input id="decay" type="range" min="0.02" max="2" step="0.01" value="0.2">
+                    </div>
+
+                    <div class="knob-name">Decay</div>
+                    <output id="decay-value" class="knob-value">200 ms</output>
+                </div>
+            </section>
+
+            <section class="module">
+                <h2>Accent / Glide</h2>
+
+                <div class="knob-control" data-knob data-input="accent-amount" data-output="accent-amount-value">
+                    <div class="knob">
+                        <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                            <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input id="accent-amount" type="range" min="0" max="1" step="0.01" value="0.5">
+                    </div>
+
+                    <div class="knob-name">Accent</div>
+                    <output id="accent-amount-value" class="knob-value">0.50</output>
+                </div>
+
+                <div class="knob-control" data-knob data-input="glide-time" data-output="glide-time-value">
+                    <div class="knob">
+                        <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                            <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input id="glide-time" type="range" min="0.01" max="1" step="0.01" value="0.06">
+                    </div>
+
+                    <div class="knob-name">Glide Time</div>
+                    <output id="glide-time-value" class="knob-value">60 ms</output>
+                </div>
+
+                <div class="knob-control" data-knob data-input="master-volume" data-output="master-volume-value">
+                    <div class="knob">
+                        <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                            <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input id="master-volume" type="range" min="0" max="1" step="0.01" value="0.5">
+                    </div>
+
+                    <div class="knob-name">Master</div>
+                    <output id="master-volume-value" class="knob-value">0.50</output>
+                </div>
+            </section>
+        </div>
+
+        <nav class="site-nav">
+            <a href="./index.html">Home</a>
+        </nav>
+    </main>
+
+    <script type="module">
+        const STEP_COUNT = 16;
+        const ROOT_FREQUENCY = 110.0; // A2 -- a reasonable acid bassline root
+
+        // two octaves, one below the root and one above -- a real 303's
+        // playable range is around this size before you'd reach for the
+        // instrument's own up/down transpose
+        const MIN_SEMITONE = -12;
+        const MAX_SEMITONE = 12;
+
+        // note names start at C (not A) because octave numbers increment
+        // at C in standard notation, not at the root note
+        const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const ROOT_ABSOLUTE_SEMITONE = 33; // A2 == octave 2 (2*12) + index of "A" (9)
+
+        function noteFrequency(semitoneOffset) {
+            return ROOT_FREQUENCY * Math.pow(2, semitoneOffset / 12);
+        }
+
+        function noteName(semitoneOffset) {
+            const absolute = ROOT_ABSOLUTE_SEMITONE + semitoneOffset;
+            const octave = Math.floor(absolute / 12);
+            const index = ((absolute % 12) + 12) % 12;
+
+            return `${NOTE_NAMES[index]}${octave}`;
+        }
+
+        const steps = Array.from({ length: STEP_COUNT }, () => ({
+            semitone: 0,
+            gate: false,
+            accent: false,
+            slide: false
+        }));
+
+        const status = document.getElementById("status");
+        const sequencerEl = document.getElementById("acid-sequencer");
+
+        const audio = new AudioContext();
+
+        const wasmResponse = await fetch("./pkg/versasha_com_bg.wasm");
+
+        if (!wasmResponse.ok) {
+            throw new Error(`Failed to fetch WASM: ${wasmResponse.status}`);
+        }
+
+        const wasmBytes = await wasmResponse.arrayBuffer();
+        const wasmModule = await WebAssembly.compile(wasmBytes);
+
+        await audio.audioWorklet.addModule(`./js/acid-worklet.js?v=${Date.now()}`);
+
+        const node = new AudioWorkletNode(
+            audio,
+            "acid-processor",
+            {
+                numberOfInputs: 0,
+                numberOfOutputs: 1,
+                outputChannelCount: [2],
+                processorOptions: { wasmModule }
+            }
+        );
+
+        node.connect(audio.destination);
+
+        node.port.onmessage = event => {
+            const message = event.data;
+
+            if (message.type === "error" || message.type === "warning") {
+                console.error("[Acid worklet]", message.message);
+                return;
+            }
+
+            if (message.type === "step") {
+                highlightStep(message.step);
+            }
+        };
+
+        status.textContent = "Ready — press Play or click a step";
+
+        function send(type, payload = {}) {
+            node.port.postMessage({ type, ...payload });
+        }
+
+        async function startAudio() {
+            await audio.resume();
+        }
+
+        function highlightStep(currentStep) {
+            sequencerEl.querySelectorAll(".acid-step-cell").forEach(cell => {
+                cell.classList.toggle("current", Number(cell.dataset.step) === currentStep);
+            });
+        }
+
+        function sendStep(index) {
+            const step = steps[index];
+
+            send("set-step", {
+                index,
+                note: noteFrequency(step.semitone),
+                gate: step.gate,
+                accent: step.accent,
+                slide: step.slide
+            });
+        }
+
+        steps.forEach((step, index) => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "acid-step";
+
+            const cell = document.createElement("button");
+            cell.type = "button";
+            cell.className = "acid-step-cell";
+            cell.dataset.step = index;
+            cell.textContent = noteName(step.semitone);
+            cell.title = "Toggle this step on/off";
+
+            cell.addEventListener("click", async () => {
+                await startAudio();
+
+                step.gate = !step.gate;
+                cell.classList.toggle("active", step.gate);
+
+                sendStep(index);
+            });
+
+            const noteSelect = document.createElement("select");
+            noteSelect.className = "acid-step-note";
+            noteSelect.title = "Note for this step";
+
+            for (let semitone = MIN_SEMITONE; semitone <= MAX_SEMITONE; semitone++) {
+                const option = document.createElement("option");
+                option.value = semitone;
+                option.textContent = noteName(semitone);
+
+                if (semitone === step.semitone) {
+                    option.selected = true;
+                }
+
+                noteSelect.appendChild(option);
+            }
+
+            noteSelect.addEventListener("change", async () => {
+                await startAudio();
+
+                step.semitone = Number(noteSelect.value);
+                cell.textContent = noteName(step.semitone);
+
+                sendStep(index);
+            });
+
+            const flags = document.createElement("div");
+            flags.className = "acid-step-flags";
+
+            const accentFlag = document.createElement("button");
+            accentFlag.type = "button";
+            accentFlag.className = "acid-step-flag";
+            accentFlag.textContent = "A";
+            accentFlag.title = "Accent";
+
+            accentFlag.addEventListener("click", () => {
+                step.accent = !step.accent;
+                accentFlag.classList.toggle("active", step.accent);
+                sendStep(index);
+            });
+
+            const slideFlag = document.createElement("button");
+            slideFlag.type = "button";
+            slideFlag.className = "acid-step-flag";
+            slideFlag.textContent = "S";
+            slideFlag.title = "Slide";
+
+            slideFlag.addEventListener("click", () => {
+                step.slide = !step.slide;
+                slideFlag.classList.toggle("active", step.slide);
+                sendStep(index);
+            });
+
+            flags.append(accentFlag, slideFlag);
+            wrapper.append(cell, noteSelect, flags);
+            sequencerEl.appendChild(wrapper);
+        });
+
+        document.getElementById("play").addEventListener("click", async () => {
+            await startAudio();
+            send("play");
+        });
+
+        document.getElementById("pause").addEventListener("click", () => {
+            send("pause");
+        });
+
+        document.getElementById("stop").addEventListener("click", () => {
+            send("stop");
+        });
+
+        document.getElementById("bpm").addEventListener("change", event => {
+            send("set-bpm", { value: Number(event.target.value) });
+        });
+
+        document.getElementById("waveform").addEventListener("change", event => {
+            send("set-waveform", { value: Number(event.target.value) });
+        });
+
+        // --- knobs (same widget as index.html's synth controls) ------------
+
+        function clamp(value, minimum, maximum) {
+            return Math.min(Math.max(value, minimum), maximum);
+        }
+
+        function decimalPlaces(step) {
+            const text = String(step);
+            return text.includes(".") ? text.split(".")[1].length : 0;
+        }
+
+        function initializeKnob({ inputId, outputId, format, messageType, transform = value => value }) {
+            const input = document.getElementById(inputId);
+            const output = document.getElementById(outputId);
+            const wrapper = input.closest("[data-knob]");
+            const knob = wrapper.querySelector(".knob");
+
+            const minimum = Number(input.min);
+            const maximum = Number(input.max);
+            const step = Number(input.step || 1);
+            const precision = decimalPlaces(step);
+
+            let dragging = false;
+            let previousY = 0;
+
+            function setValue(value) {
+                const snapped = Math.round((value - minimum) / step) * step + minimum;
+                const clamped = clamp(snapped, minimum, maximum);
+
+                input.value = clamped.toFixed(precision);
+
+                const normalized = (clamped - minimum) / (maximum - minimum);
+                wrapper.style.setProperty("--normalized", normalized);
+
+                output.value = format(clamped);
+
+                send(messageType, { value: transform(clamped) });
+            }
+
+            knob.addEventListener("pointerdown", event => {
+                dragging = true;
+                previousY = event.clientY;
+                knob.setPointerCapture(event.pointerId);
+            });
+
+            knob.addEventListener("pointermove", event => {
+                if (!dragging) return;
+
+                const delta = previousY - event.clientY;
+                previousY = event.clientY;
+
+                const range = maximum - minimum;
+                const sensitivity = event.shiftKey ? 0.0008 : 0.004;
+
+                setValue(Number(input.value) + delta * range * sensitivity);
+            });
+
+            knob.addEventListener("pointerup", event => {
+                dragging = false;
+                knob.releasePointerCapture(event.pointerId);
+            });
+
+            knob.addEventListener("pointercancel", () => {
+                dragging = false;
+            });
+
+            knob.addEventListener("wheel", event => {
+                event.preventDefault();
+
+                const direction = event.deltaY > 0 ? -1 : 1;
+                const multiplier = event.shiftKey ? 0.1 : 1;
+
+                setValue(Number(input.value) + direction * step * multiplier);
+            }, { passive: false });
+
+            knob.addEventListener("dblclick", () => {
+                setValue(Number(input.defaultValue));
+            });
+
+            setValue(Number(input.value));
+        }
+
+        function logarithmicFrequency(position, minimum = 100, maximum = 8000) {
+            return minimum * Math.pow(maximum / minimum, position);
+        }
+
+        initializeKnob({
+            inputId: "tuning",
+            outputId: "tuning-value",
+            format: value => `${value > 0 ? "+" : ""}${Math.round(value)} st`,
+            messageType: "set-tuning"
+        });
+
+        initializeKnob({
+            inputId: "cutoff",
+            outputId: "cutoff-value",
+            format: position => {
+                const frequency = logarithmicFrequency(position);
+                return frequency >= 1000 ? `${(frequency / 1000).toFixed(1)} kHz` : `${Math.round(frequency)} Hz`;
+            },
+            messageType: "set-cutoff",
+            transform: logarithmicFrequency
+        });
+
+        initializeKnob({
+            inputId: "resonance",
+            outputId: "resonance-value",
+            format: value => value.toFixed(2),
+            messageType: "set-resonance"
+        });
+
+        initializeKnob({
+            inputId: "env-mod",
+            outputId: "env-mod-value",
+            format: value => value.toFixed(2),
+            messageType: "set-env-mod"
+        });
+
+        initializeKnob({
+            inputId: "decay",
+            outputId: "decay-value",
+            format: value => `${Math.round(value * 1000)} ms`,
+            messageType: "set-decay"
+        });
+
+        initializeKnob({
+            inputId: "accent-amount",
+            outputId: "accent-amount-value",
+            format: value => value.toFixed(2),
+            messageType: "set-accent-amount"
+        });
+
+        initializeKnob({
+            inputId: "glide-time",
+            outputId: "glide-time-value",
+            format: value => `${Math.round(value * 1000)} ms`,
+            messageType: "set-glide-time"
+        });
+
+        initializeKnob({
+            inputId: "master-volume",
+            outputId: "master-volume-value",
+            format: value => value.toFixed(2),
+            messageType: "set-master-volume"
+        });
+
+        // initial waveform push, matching index.html's bindSelect pattern
+        send("set-waveform", { value: Number(document.getElementById("waveform").value) });
+    </script>
+</body>
+</html>

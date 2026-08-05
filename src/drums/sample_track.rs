@@ -1,8 +1,8 @@
 use crate::drums::audio_sample::AudioSample;
-use crate::drums::drum_envelope::DrumEnvelope;
 use crate::drums::sample_player::SamplePlayer;
-use crate::drums::tune::Tune;
+use crate::dsp::envelopes::ad_envelope::ADEnvelope;
 use crate::dsp::noise::NoiseGenerator;
+use crate::dsp::tune::Tune;
 use crate::dsp::types::SampleRate;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -48,7 +48,7 @@ pub struct SampleTrack {
     track_type: SampleTrackType,
     player: SamplePlayer,
     tune: Option<Tune>,
-    envelope: Option<DrumEnvelope>,
+    envelope: Option<ADEnvelope>,
     noise: Option<NoiseGenerator>,
     snappy_amount: f32,
 }
@@ -62,7 +62,7 @@ impl SampleTrack {
             tune: track_type.supports_tune().then(Tune::new),
             envelope: track_type
                 .supports_envelope()
-                .then(|| DrumEnvelope::new(rate)),
+                .then(|| ADEnvelope::new(rate)),
             noise: track_type.supports_snappy().then(|| NoiseGenerator::new(1)),
             snappy_amount: 0.0,
             track_type,
@@ -94,11 +94,11 @@ impl SampleTrack {
             return None;
         }
 
-        self.envelope.as_ref().map(DrumEnvelope::attack_time)
+        self.envelope.as_ref().map(ADEnvelope::attack_time)
     }
 
     pub fn decay_time(&self) -> Option<f32> {
-        self.envelope.as_ref().map(DrumEnvelope::decay_time)
+        self.envelope.as_ref().map(ADEnvelope::decay_time)
     }
 
     pub fn snappy(&self) -> Option<f32> {
@@ -363,14 +363,14 @@ mod tests {
         assert_approx_eq(track.next_sample(), 30.0);
     }
 
-    // --- DrumEnvelope (attack/decay) -----------------------------------
+    // --- ADEnvelope (attack/decay) -----------------------------------
 
     #[test]
     fn envelope_is_silent_until_triggered() {
         let sample = AudioSample::new(16.0, vec![7.0, 7.0]);
         let mut track = SampleTrack::new(sample, 16.0, SampleTrackType::Kick);
 
-        // Kick's DrumEnvelope starts Idle -- unlike SamplePlayer, which is
+        // Kick's ADEnvelope starts Idle -- unlike SamplePlayer, which is
         // always "live" from position 0, a percussive envelope must be
         // triggered before it contributes any sound
         assert_approx_eq(track.next_sample(), 0.0);
@@ -383,7 +383,7 @@ mod tests {
 
         track.trigger();
 
-        // at 16Hz, DrumEnvelope's default (near-instant) attack time
+        // at 16Hz, ADEnvelope's default (near-instant) attack time
         // completes within a single sample, so the very first sample
         // after a trigger is already at full envelope level
         assert_approx_eq(track.next_sample(), 7.0);

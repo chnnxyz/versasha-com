@@ -1,4 +1,4 @@
-use super::types::Sample;
+use crate::dsp::types::Sample;
 
 // xorshift32 must never be seeded with 0
 const DEFAULT_SEED: u32 = 0x9E3779B9; // arbitrary odd, non-zero (golden ratio constant)

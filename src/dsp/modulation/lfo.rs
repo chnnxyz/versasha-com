@@ -1,11 +1,8 @@
 use crate::dsp::modulation::{Modulation, ModulationGenerator, ModulationSource, ModulationTarget};
 
-use crate::dsp::phase_generator::PhaseGenerator;
-use crate::dsp::types::DEFAULT_LFO_FREQ;
-
-use super::types::{Frequency, Phase, Sample, SampleRate};
-
-use super::waveform::Waveform;
+use crate::dsp::oscillators::phase_generator::PhaseGenerator;
+use crate::dsp::oscillators::waveform::Waveform;
+use crate::dsp::types::{DEFAULT_LFO_FREQ, Frequency, Phase, Sample, SampleRate};
 
 #[derive(Clone)]
 pub struct Lfo {

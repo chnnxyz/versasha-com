@@ -1,4 +1,6 @@
-use super::types::{Sample, SampleRate};
+use crate::dsp::types::{Sample, SampleRate};
+
+pub mod ad_envelope;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EnvelopeState {
@@ -14,8 +16,6 @@ pub struct Envelope {
     state: EnvelopeState,
 
     // ADSR params
-    attack: Sample,
-    decay: Sample,
     sustain: Sample,
     release: Sample,
 
@@ -39,8 +39,6 @@ impl Envelope {
         Self {
             state: EnvelopeState::Idle,
 
-            attack,
-            decay,
             sustain,
             release,
 

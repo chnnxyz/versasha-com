@@ -1,4 +1,6 @@
-use super::types::{Frequency, Sample, SampleRate};
+use crate::dsp::types::{Frequency, Sample, SampleRate};
+
+pub mod filter_ladder;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FilterType {

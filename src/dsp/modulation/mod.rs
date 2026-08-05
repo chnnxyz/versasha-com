@@ -1,4 +1,7 @@
-use super::types::Sample;
+use crate::dsp::types::Sample;
+
+pub mod lfo;
+pub mod modulation_matrix;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ModulationTarget {

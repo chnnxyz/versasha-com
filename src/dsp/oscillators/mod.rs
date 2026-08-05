@@ -1,8 +1,9 @@
-use super::phase_generator::PhaseGenerator;
-use super::types::{
-    DEFAULT_FREQ, DEFAULT_PHASE, DEFAULT_SAMPLE_RATE, Frequency, Phase, Sample, SampleRate,
-};
-use super::waveform::Waveform;
+use crate::dsp::oscillators::phase_generator::PhaseGenerator;
+use crate::dsp::oscillators::waveform::Waveform;
+use crate::dsp::types::{DEFAULT_PHASE, Frequency, Phase, Sample, SampleRate};
+
+pub mod phase_generator;
+pub mod waveform;
 
 pub struct Oscillator {
     generator: PhaseGenerator,
@@ -64,6 +65,7 @@ impl Oscillator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dsp::types::{DEFAULT_FREQ, DEFAULT_SAMPLE_RATE};
 
     const EPSILON: f32 = 1e-6;
 

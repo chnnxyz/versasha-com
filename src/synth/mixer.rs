@@ -1,11 +1,11 @@
-use super::types::{Sample, SampleRate};
+use crate::dsp::types::Sample;
 
-pub struct Mixer {
+pub struct SynthMixer {
     ins: Vec<Sample>,
     gain: Sample,
 }
 
-impl Mixer {
+impl SynthMixer {
     pub fn new() -> Self {
         Self {
             ins: Vec::new(),
@@ -51,14 +51,14 @@ mod tests {
 
     #[test]
     fn new_mixer_is_empty() {
-        let mixer = Mixer::new();
+        let mixer = SynthMixer::new();
 
         assert_approx_eq(mixer.output(), 0.0);
     }
 
     #[test]
     fn single_input_is_unchanged() {
-        let mut mixer = Mixer::new();
+        let mut mixer = SynthMixer::new();
 
         mixer.add(0.5);
 
@@ -67,7 +67,7 @@ mod tests {
 
     #[test]
     fn multiple_inputs_are_averaged() {
-        let mut mixer = Mixer::new();
+        let mut mixer = SynthMixer::new();
 
         mixer.add(1.0);
         mixer.add(-1.0);
@@ -77,7 +77,7 @@ mod tests {
 
     #[test]
     fn clear_removes_inputs() {
-        let mut mixer = Mixer::new();
+        let mut mixer = SynthMixer::new();
 
         mixer.add(1.0);
         mixer.reset();
@@ -87,7 +87,7 @@ mod tests {
 
     #[test]
     fn output_stays_in_range() {
-        let mut mixer = Mixer::new();
+        let mut mixer = SynthMixer::new();
 
         mixer.add(1.0);
         mixer.add(1.0);

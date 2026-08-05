@@ -1,17 +1,16 @@
-use crate::dsp::envelope::EnvelopeState;
-use crate::dsp::filter::{Filter, FilterType};
+use crate::dsp::envelopes::Envelope;
+use crate::dsp::envelopes::EnvelopeState;
+use crate::dsp::filters::{Filter, FilterType};
 use crate::dsp::fx::FxRoute;
 use crate::dsp::fx::delay::Delay;
-use crate::dsp::mixer::Mixer;
 use crate::dsp::modulation::ModulationTarget;
-use crate::dsp::modulation_matrix::ModulationMatrix;
+use crate::dsp::modulation::modulation_matrix::ModulationMatrix;
+use crate::dsp::oscillators::Oscillator;
+use crate::dsp::types::{DryWet, Frequency, Sample, SampleRate, Time};
 use crate::params::voice_params::VoiceParams;
+use crate::synth::mixer::SynthMixer;
 
-use super::envelope::Envelope;
-use super::oscillator::Oscillator;
-use super::types::{DryWet, Frequency, Sample, SampleRate, Time};
-
-pub struct Voice {
+pub struct SynthVoice {
     osc1: Oscillator,
     osc2: Oscillator,
 
@@ -21,7 +20,7 @@ pub struct Voice {
 
     active: bool,
 
-    mixer: Mixer,
+    mixer: SynthMixer,
 
     modulation_matrix: ModulationMatrix,
 
@@ -34,7 +33,7 @@ pub struct Voice {
     delay_route: FxRoute,
 }
 
-impl Voice {
+impl SynthVoice {
     pub fn new(rate: SampleRate) -> Self {
         Self {
             osc1: Oscillator::new(rate),
@@ -47,7 +46,7 @@ impl Voice {
 
             active: false,
 
-            mixer: Mixer::new(),
+            mixer: SynthMixer::new(),
 
             modulation_matrix: ModulationMatrix::new(),
 
@@ -294,11 +293,8 @@ impl Voice {
 mod tests {
     use super::*;
 
-    use crate::dsp::envelope::EnvelopeState;
-    use crate::dsp::lfo::Lfo;
-    use crate::dsp::modulation::{
-        Modulation, ModulationGenerator, ModulationSource, ModulationTarget,
-    };
+    use crate::dsp::modulation::lfo::Lfo;
+    use crate::dsp::modulation::{Modulation, ModulationGenerator, ModulationSource};
 
     const EPSILON: f32 = 1e-3;
 
@@ -311,7 +307,7 @@ mod tests {
         );
     }
 
-    fn push_modulation(voice: &mut Voice, target: ModulationTarget, value: Sample) {
+    fn push_modulation(voice: &mut SynthVoice, target: ModulationTarget, value: Sample) {
         voice
             .modulation_matrix_mut()
             .push(Modulation::new(ModulationSource::Lfo, target, value));
@@ -319,7 +315,7 @@ mod tests {
 
     #[test]
     fn new_voice_starts_silent() {
-        let voice = Voice::new(48_000.0);
+        let voice = SynthVoice::new(48_000.0);
 
         assert_eq!(voice.frequency, 0.0);
         assert_eq!(voice.envelope.level(), 0.0);
@@ -328,14 +324,14 @@ mod tests {
 
     #[test]
     fn new_voice_is_inactive() {
-        let voice = Voice::new(48_000.0);
+        let voice = SynthVoice::new(48_000.0);
 
         assert!(!voice.is_active());
     }
 
     #[test]
     fn note_on_sets_frequency() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 
@@ -346,7 +342,7 @@ mod tests {
 
     #[test]
     fn note_on_activates_voice() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 
@@ -355,7 +351,7 @@ mod tests {
 
     #[test]
     fn note_on_starts_envelope() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 
@@ -364,7 +360,7 @@ mod tests {
 
     #[test]
     fn note_on_resets_phases() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 
@@ -381,7 +377,7 @@ mod tests {
 
     #[test]
     fn note_on_produces_output() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 
@@ -399,7 +395,7 @@ mod tests {
 
     #[test]
     fn modulation_value_can_be_pushed() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         push_modulation(&mut voice, ModulationTarget::Pitch, 2.0);
 
@@ -408,7 +404,7 @@ mod tests {
 
     #[test]
     fn modulation_values_stack() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         push_modulation(&mut voice, ModulationTarget::Pitch, 5.0);
 
@@ -419,7 +415,7 @@ mod tests {
 
     #[test]
     fn pitch_modulation_changes_frequency() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 
@@ -430,7 +426,7 @@ mod tests {
 
     #[test]
     fn pitch_octave_doubles_frequency() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 
@@ -441,7 +437,7 @@ mod tests {
 
     #[test]
     fn vibrato_modulation_changes_frequency() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 
@@ -452,14 +448,14 @@ mod tests {
 
     #[test]
     fn volume_without_modulation_returns_one() {
-        let voice = Voice::new(48_000.0);
+        let voice = SynthVoice::new(48_000.0);
 
         assert_eq!(voice.volume_multiplier(), 1.0);
     }
 
     #[test]
     fn volume_modulation_is_multiplier() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         push_modulation(&mut voice, ModulationTarget::Volume, 0.5);
 
@@ -468,7 +464,7 @@ mod tests {
 
     #[test]
     fn volume_modulation_is_clamped() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         push_modulation(&mut voice, ModulationTarget::Volume, 2.0);
 
@@ -477,7 +473,7 @@ mod tests {
 
     #[test]
     fn reset_modulation_clears_values() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         push_modulation(&mut voice, ModulationTarget::Pitch, 10.0);
 
@@ -490,7 +486,7 @@ mod tests {
 
     #[test]
     fn filter_cutoff_can_be_changed() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.set_filter_cutoff(800.0);
 
@@ -499,7 +495,7 @@ mod tests {
 
     #[test]
     fn filter_resonance_can_be_changed() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.set_filter_resonance(0.6);
 
@@ -508,7 +504,7 @@ mod tests {
 
     #[test]
     fn filter_type_can_be_changed() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.set_filter_type(FilterType::HighPass);
 
@@ -517,14 +513,14 @@ mod tests {
 
     #[test]
     fn delay_defaults_to_master_route() {
-        let voice = Voice::new(48_000.0);
+        let voice = SynthVoice::new(48_000.0);
 
         assert_eq!(voice.delay_route(), FxRoute::Master);
     }
 
     #[test]
     fn delay_route_can_be_changed() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.set_delay_route(FxRoute::Osc1);
 
@@ -533,7 +529,7 @@ mod tests {
 
     #[test]
     fn delay_params_round_trip() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.set_delay_time(0.4);
         voice.set_delay_feedback(0.6);
@@ -546,8 +542,8 @@ mod tests {
 
     #[test]
     fn master_route_does_not_apply_delay_pre_mix() {
-        let mut osc1_voice = Voice::new(48_000.0);
-        let mut master_voice = Voice::new(48_000.0);
+        let mut osc1_voice = SynthVoice::new(48_000.0);
+        let mut master_voice = SynthVoice::new(48_000.0);
 
         for voice in [&mut osc1_voice, &mut master_voice] {
             voice.set_delay_time(0.4);
@@ -572,7 +568,7 @@ mod tests {
 
     #[test]
     fn filter_envelope_changes_cutoff() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.set_filter_cutoff(1000.0);
 
@@ -587,7 +583,7 @@ mod tests {
 
     #[test]
     fn filter_modulation_changes_cutoff() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.set_filter_cutoff(1000.0);
 
@@ -598,7 +594,7 @@ mod tests {
 
     #[test]
     fn osc2_detune_changes_frequency() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 
@@ -615,7 +611,7 @@ mod tests {
 
     #[test]
     fn output_stays_in_range() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 
@@ -628,7 +624,7 @@ mod tests {
 
     #[test]
     fn lfo_modulation_can_be_pushed_into_voice() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         let mut lfo = Lfo::new(48_000.0);
 
@@ -645,7 +641,7 @@ mod tests {
 
     #[test]
     fn lfo_pitch_modulation_changes_frequency() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 
@@ -673,7 +669,7 @@ mod tests {
 
     #[test]
     fn lfo_pitch_modulation_moves_frequency_range() {
-        let mut voice = Voice::new(48_000.0);
+        let mut voice = SynthVoice::new(48_000.0);
 
         voice.note_on(440.0);
 

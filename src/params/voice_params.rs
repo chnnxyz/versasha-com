@@ -1,6 +1,5 @@
 use crate::params::envelope_params::EnvelopeParams;
-
-use super::oscillator_params::OscillatorParams;
+use crate::params::oscillator_params::OscillatorParams;
 
 #[derive(Debug, Clone, Copy)]
 pub struct VoiceParams {

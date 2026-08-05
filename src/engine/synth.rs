@@ -1,14 +1,14 @@
-use crate::dsp::filter::FilterType;
+use crate::dsp::filters::FilterType;
 use crate::dsp::fx::delay::Delay;
 use crate::dsp::fx::FxRoute;
-use crate::dsp::lfo::Lfo;
+use crate::dsp::modulation::lfo::Lfo;
 use crate::dsp::modulation::{ModulationGenerator, ModulationTarget};
+use crate::dsp::oscillators::waveform::Waveform;
 use crate::dsp::types::{DryWet, Sample, SampleRate, Time};
-use crate::dsp::voice::Voice;
-use crate::dsp::waveform::Waveform;
+use crate::synth::voice::SynthVoice;
 
 pub struct Synth {
-    voices: Vec<Voice>,
+    voices: Vec<SynthVoice>,
     lfos: Vec<Lfo>,
     sample_rate: SampleRate,
     master_volume: Sample,
@@ -28,7 +28,7 @@ impl Synth {
         };
 
         for _ in 0..voices {
-            synth.voices.push(Voice::new(rate));
+            synth.voices.push(SynthVoice::new(rate));
         }
 
         synth
@@ -288,7 +288,7 @@ mod tests {
 
         synth.note_on(440.0);
 
-        assert!(synth.voices.iter().any(Voice::is_active));
+        assert!(synth.voices.iter().any(SynthVoice::is_active));
     }
 
     #[test]
@@ -308,7 +308,7 @@ mod tests {
 
         assert_eq!(
             voice_440.envelope_state(),
-            crate::dsp::envelope::EnvelopeState::Release
+            crate::dsp::envelopes::EnvelopeState::Release
         );
     }
 

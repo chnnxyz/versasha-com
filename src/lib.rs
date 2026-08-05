@@ -1,7 +1,11 @@
+pub mod acid_bass;
 pub mod drums;
 pub mod dsp;
 pub mod engine;
+pub mod mixer;
 pub mod params;
+pub mod sequencing;
+pub mod synth;
 pub mod wasm;
 
 use wasm_bindgen::prelude::*;

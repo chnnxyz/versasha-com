@@ -1,5 +1,5 @@
+use crate::dsp::oscillators::waveform::Waveform;
 use crate::dsp::types::Sample;
-use crate::dsp::waveform::Waveform;
 
 #[derive(Debug, Clone, Copy)]
 pub struct OscillatorParams {

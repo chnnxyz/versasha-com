@@ -91,10 +91,100 @@
             color: #000;
         }
 
+        .contribute-banner {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+
+            margin-bottom: 16px;
+
+            color: #888;
+
+            font-size: 11px;
+            letter-spacing: 0.03em;
+        }
+
+        .contribute-banner .github-icon {
+            width: 13px;
+            height: 13px;
+            flex-shrink: 0;
+
+            fill: currentColor;
+        }
+
+        .contribute-banner a {
+            color: #888;
+            text-decoration: underline;
+        }
+
+        .contribute-banner a:hover {
+            color: #fff;
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .brand h1 {
+            margin: 0;
+        }
+
+        .view-subtitle {
+            color: #888;
+
+            font-size: 11px;
+            letter-spacing: 0.06em;
+        }
+
+        /* a small status dot instead of a text button -- any real gesture
+           (a note, a transport click, a pad hit) already resumes the audio
+           context on its own, so this is just a passive readout of that
+           state, not something that needs deliberately clicking most of
+           the time */
         #start {
+            margin-left: auto;
+
+            width: 12px;
+            height: 12px;
+            padding: 0;
+
+            border: 1px solid #fff;
+            border-radius: 50%;
+
+            background: #f1c40f;
+
+            cursor: pointer;
+        }
+
+        #start:hover {
+            opacity: 0.8;
+        }
+
+        #start.running {
+            background: #2ecc71;
+        }
+
+        /* --- global transport (rec / play / pause / stop / bpm) -------- */
+
+        .transport-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .transport-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 34px;
+            height: 34px;
+
             border: 1px solid #fff;
             border-radius: 0;
-            padding: 8px 14px;
+            padding: 0;
 
             background: #000;
             color: #fff;
@@ -102,14 +192,77 @@
             cursor: pointer;
         }
 
-        #start:hover {
+        .transport-button:hover {
             background: #fff;
             color: #000;
         }
 
-        #start:disabled {
-            cursor: default;
-            opacity: 0.5;
+        .transport-button.active {
+            background: #fff;
+            color: #000;
+        }
+
+        .transport-button svg {
+            width: 13px;
+            height: 13px;
+
+            fill: currentColor;
+        }
+
+        .record-dot {
+            display: block;
+            width: 10px;
+            height: 10px;
+
+            background: #c0392b;
+            border-radius: 50%;
+        }
+
+        #record.recording .record-dot {
+            border-radius: 0;
+        }
+
+        .transport-bpm {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            margin-left: 8px;
+
+            color: #888;
+
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .transport-bpm input {
+            width: 60px;
+            height: 34px;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 6px;
+
+            background: #000;
+            color: #fff;
+
+            font: inherit;
+        }
+
+        .engine-tab-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 8px 12px;
+        }
+
+        .engine-tab-icon svg {
+            width: 15px;
+            height: 15px;
+
+            fill: currentColor;
         }
 
         .modules {
@@ -117,6 +270,14 @@
             grid-template-columns:
                 repeat(6, minmax(0, 1fr));
             gap: 20px;
+        }
+
+        /* Bass has 5 modules (not Synth's 6) -- auto-fit + minmax
+           guarantees they all fit at any viewport width without a
+           separate set of breakpoints tuned to a different module count */
+        #bass-view .modules {
+            grid-template-columns:
+                repeat(auto-fit, minmax(140px, 1fr));
         }
 
         .module {
@@ -411,7 +572,8 @@
             }
         }
 
-        .drum-status {
+        .drum-status,
+        .bass-status {
             margin-bottom: 20px;
 
             color: #888;
@@ -420,59 +582,8 @@
             text-transform: uppercase;
         }
 
-        .drum-transport {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 16px;
-
+        .drum-master {
             margin-bottom: 30px;
-            padding-bottom: 20px;
-
-            border-bottom: 1px solid #fff;
-        }
-
-        .drum-transport button {
-            border: 1px solid #fff;
-            border-radius: 0;
-            padding: 8px 14px;
-
-            background: #000;
-            color: #fff;
-
-            cursor: pointer;
-        }
-
-        .drum-transport button:hover {
-            background: #fff;
-            color: #000;
-        }
-
-        .drum-transport label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-
-            color: #888;
-
-            font-size: 11px;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-
-        .drum-transport input {
-            border: 1px solid #fff;
-            border-radius: 0;
-            padding: 6px;
-
-            background: #000;
-            color: #fff;
-
-            font: inherit;
-        }
-
-        .drum-transport input[type="number"] {
-            width: 70px;
         }
 
         .drum-sequencer {
@@ -532,12 +643,12 @@
         }
 
         .drum-track-mute.active {
-            background: #fff;
+            background: #a68a3a;
             color: #000;
         }
 
         .drum-track-solo.active {
-            background: #888;
+            background: #3d6d94;
             color: #000;
         }
 
@@ -647,25 +758,402 @@
             letter-spacing: 0.05em;
             text-transform: uppercase;
         }
+
+        /* --- bass (acid) step sequencer -------------------------------- */
+
+        .acid-sequencer {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+
+            overflow-x: auto;
+
+            border-bottom: 1px solid #fff;
+        }
+
+        .acid-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+
+            flex: 0 0 auto;
+        }
+
+        .acid-step-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 36px;
+            height: 36px;
+
+            border: 1px solid #333;
+            border-radius: 0;
+
+            background: #000;
+            color: #888;
+
+            font-size: 8px;
+
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .acid-step-note {
+            width: 44px;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+            padding: 3px 2px;
+
+            background: #000;
+            color: #fff;
+
+            font: inherit;
+            font-size: 8px;
+            text-align: center;
+            text-align-last: center;
+        }
+
+        .acid-step-cell.active {
+            background: #888;
+            color: #000;
+        }
+
+        .acid-step-cell.current {
+            border-color: #fff;
+        }
+
+        .acid-step-cell.active.current {
+            background: #fff;
+            color: #000;
+        }
+
+        .acid-step-flags {
+            display: flex;
+            width: 44px;
+            gap: 2px;
+        }
+
+        .acid-step-flag {
+            flex: 1;
+            height: 16px;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+
+            background: #000;
+            color: #888;
+
+            font-size: 8px;
+            line-height: 1;
+
+            cursor: pointer;
+        }
+
+        .acid-step-flag.active {
+            background: #fff;
+            color: #000;
+        }
+
+        /* --- mixer --------------------------------------------------------
+           DJ-mixer channel-strip logic, top to bottom: High, Mid, Low,
+           Pan, VU meter + fader, Mute/Solo at the very bottom. No boxed
+           panels -- just a vertical rule between adjacent strips. */
+
+        .mixer-strips {
+            display: flex;
+            flex-wrap: wrap;
+
+            padding-top: 20px;
+
+            border-top: 1px solid #fff;
+        }
+
+        .mixer-strip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+
+            /* grows to share the full row width evenly, not just as wide
+               as its own content -- shrinks no smaller than 130px before
+               .mixer-strips wraps */
+            flex: 1 1 130px;
+
+            padding: 0 16px;
+
+            border-left: 1px solid #333;
+        }
+
+        .mixer-strip:first-child {
+            padding-left: 0;
+            border-left: none;
+        }
+
+        .mixer-strip h2 {
+            margin: 0 0 6px;
+
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* small knob variant for High/Mid/Low/Pan, stacked vertically --
+           transform:scale() doesn't shrink the box it's applied to, so
+           this wrapper pins an explicit height to the scaled visual size
+           instead of leaving a dead gap below each knob */
+        .mixer-knob {
+            height: 64px;
+            overflow: hidden;
+        }
+
+        .mixer-knob .knob-control {
+            transform: scale(0.6);
+            transform-origin: top center;
+        }
+
+        /* Hi/Mid/Low knobs on the left, that channel's own VU meter just
+           to their right -- align-items:stretch (the default) is what
+           actually pins the meter's height to exactly span from the top
+           of Hi to the bottom of Low, no measuring required */
+        .mixer-eq-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .mixer-eq-knobs {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mixer-buttons {
+            display: flex;
+            gap: 6px;
+
+            margin-top: 4px;
+        }
+
+        .mixer-mute,
+        .mixer-solo {
+            width: 22px;
+            height: 18px;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+
+            background: #000;
+            color: #888;
+
+            font-size: 9px;
+
+            cursor: pointer;
+        }
+
+        /* muted, not neon -- same tones drum-track-mute/solo use, so a
+           mute/solo reads the same wherever it shows up in the app */
+        .mixer-mute.active {
+            background: #a68a3a;
+            color: #000;
+        }
+
+        .mixer-solo.active {
+            background: #3d6d94;
+            color: #000;
+        }
+
+        .mixer-fader-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+
+            margin-top: 4px;
+        }
+
+        /* master's own meter row -- stereo, so two bars side by side,
+           each labeled */
+        .mixer-master-meters {
+            display: flex;
+            gap: 10px;
+
+            margin-top: 4px;
+        }
+
+        .mixer-master-meter {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mixer-master-meter-label {
+            color: #888;
+
+            font-size: 9px;
+            letter-spacing: 0.05em;
+        }
+
+        .mixer-fader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mixer-fader-track {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 40px;
+            height: 120px;
+        }
+
+        .fader-input {
+            width: 110px;
+            height: 20px;
+            margin: 0;
+
+            transform: rotate(-90deg);
+
+            accent-color: #fff;
+            background: #000;
+        }
+
+        .mixer-fader-value {
+            color: #fff;
+
+            font-size: 11px;
+        }
+
+        /* --- VU meter -- a digital segmented level bar, Pioneer-style --- */
+
+        .vu-meter {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 2px;
+
+            width: 8px;
+
+            /* no explicit height -- inside .mixer-eq-row it stretches to
+               match .mixer-eq-knobs via align-items:stretch; .mixer-master-meter
+               pins an explicit height for its own stereo pair below */
+        }
+
+        .mixer-master-meter .vu-meter {
+            height: 120px;
+        }
+
+        .vu-segment {
+            flex: 1;
+            min-height: 0;
+
+            background: #1a1a1a;
+        }
+
+        .vu-segment.lit[data-color="green"] {
+            background: #2ecc71;
+        }
+
+        .vu-segment.lit[data-color="yellow"] {
+            background: #f1c40f;
+        }
+
+        .vu-segment.lit[data-color="red"] {
+            background: #e74c3c;
+        }
     </style>
 </head>
 
 <body>
     <main class="page">
+        <div class="contribute-banner">
+            <svg class="github-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+            </svg>
+            This is an open source project, contribute at:
+            <a href="https://github.com/chnnxyz/versasha-com" target="_blank" rel="noopener">chnnxyz/versasha-com</a>
+        </div>
+
         <header>
-            <h1>versasha.com</h1>
+            <div class="brand">
+                <h1>versasha.com</h1>
+                <div id="view-subtitle" class="view-subtitle">VS-2: Subtractive Synth</div>
+            </div>
+
+            <div class="transport-controls" role="group" aria-label="Transport">
+                <button
+                    id="record"
+                    type="button"
+                    class="transport-button"
+                    aria-label="Record"
+                    title="Record"
+                ><span class="record-dot"></span></button>
+
+                <button
+                    id="transport-play"
+                    type="button"
+                    class="transport-button"
+                    aria-label="Play"
+                    title="Play"
+                ><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l10 6-10 6z"></path></svg></button>
+
+                <button
+                    id="transport-pause"
+                    type="button"
+                    class="transport-button"
+                    aria-label="Pause"
+                    title="Pause"
+                ><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12"></rect><rect x="9.5" y="2" width="3.5" height="12"></rect></svg></button>
+
+                <button
+                    id="transport-stop"
+                    type="button"
+                    class="transport-button"
+                    aria-label="Stop"
+                    title="Stop"
+                ><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="10" height="10"></rect></svg></button>
+
+                <label class="transport-bpm">
+                    BPM
+                    <input id="transport-bpm" type="number" min="20" max="300" value="120">
+                </label>
+            </div>
 
             <nav class="engine-tabs" role="tablist">
                 <button type="button" class="engine-tab active" data-view="synth" role="tab" aria-selected="true">Synth</button>
                 <button type="button" class="engine-tab" data-view="drums" role="tab" aria-selected="false">Drums</button>
+                <button type="button" class="engine-tab" data-view="bass" role="tab" aria-selected="false">Bass</button>
+
+                <button
+                    type="button"
+                    class="engine-tab engine-tab-icon"
+                    data-view="mixer"
+                    role="tab"
+                    aria-selected="false"
+                    aria-label="Mixer"
+                    title="Mixer"
+                ><svg viewBox="0 0 16 16" aria-hidden="true">
+                    <line x1="3" y1="1" x2="3" y2="15" stroke="currentColor" stroke-width="1"></line>
+                    <line x1="8" y1="1" x2="8" y2="15" stroke="currentColor" stroke-width="1"></line>
+                    <line x1="13" y1="1" x2="13" y2="15" stroke="currentColor" stroke-width="1"></line>
+                    <rect x="1.5" y="9.5" width="3" height="2"></rect>
+                    <rect x="6.5" y="4" width="3" height="2"></rect>
+                    <rect x="11.5" y="7.5" width="3" height="2"></rect>
+                </svg></button>
             </nav>
 
             <button
                 id="start"
                 type="button"
-            >
-                Start
-            </button>
+                aria-label="Audio idle"
+                title="Click to start audio"
+            ></button>
         </header>
 
         <div id="synth-view" class="view">
@@ -1433,23 +1921,201 @@
                 Loading samples…
             </div>
 
-            <div class="drum-transport">
-                <button id="drum-play" type="button">Play</button>
-                <button id="drum-pause" type="button">Pause</button>
-                <button id="drum-stop" type="button">Stop</button>
+            <div class="drum-master">
+                <div class="knob-control" data-knob data-input="drum-master-volume" data-output="drum-master-volume-value">
+                    <div class="knob">
+                        <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                            <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                        </svg>
 
-                <label>
-                    BPM
-                    <input id="drum-bpm" type="number" min="20" max="300" value="120">
-                </label>
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
 
-                <label>
-                    Master
-                    <input id="drum-master-volume" type="range" min="0" max="1" step="0.01" value="0.5">
-                </label>
+                        <input id="drum-master-volume" type="range" min="0" max="1" step="0.01" value="0.5">
+                    </div>
+
+                    <div class="knob-name">Master</div>
+                    <output id="drum-master-volume-value" class="knob-value">0.50</output>
+                </div>
             </div>
 
             <div class="drum-sequencer" id="drum-sequencer"></div>
+        </div>
+
+        <div id="bass-view" class="view" hidden>
+            <div class="acid-sequencer" id="bass-sequencer"></div>
+
+            <div class="modules">
+                <section class="module">
+                    <h2>Oscillator</h2>
+
+                    <div class="field">
+                        <label class="field-label" for="bass-waveform">Waveform</label>
+
+                        <select id="bass-waveform">
+                            <option value="2">Saw</option>
+                            <option value="1">Square</option>
+                        </select>
+                    </div>
+
+                    <div class="knob-control" data-knob data-input="bass-tuning" data-output="bass-tuning-value">
+                        <div class="knob">
+                            <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                                <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                                <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            </svg>
+
+                            <div class="indicator"></div>
+                            <div class="knob-center"></div>
+
+                            <input id="bass-tuning" type="range" min="-24" max="24" step="1" value="0">
+                        </div>
+
+                        <div class="knob-name">Tuning</div>
+                        <output id="bass-tuning-value" class="knob-value">+0 st</output>
+                    </div>
+                </section>
+
+                <section class="module">
+                    <h2>Filter</h2>
+
+                    <div class="knob-control" data-knob data-input="bass-cutoff" data-output="bass-cutoff-value">
+                        <div class="knob">
+                            <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                                <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                                <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            </svg>
+
+                            <div class="indicator"></div>
+                            <div class="knob-center"></div>
+
+                            <input id="bass-cutoff" type="range" min="0" max="1" step="0.001" value="0.5">
+                        </div>
+
+                        <div class="knob-name">Cutoff</div>
+                        <output id="bass-cutoff-value" class="knob-value">800 Hz</output>
+                    </div>
+
+                    <div class="knob-control" data-knob data-input="bass-resonance" data-output="bass-resonance-value">
+                        <div class="knob">
+                            <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                                <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                                <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            </svg>
+
+                            <div class="indicator"></div>
+                            <div class="knob-center"></div>
+
+                            <input id="bass-resonance" type="range" min="0" max="1" step="0.01" value="0.3">
+                        </div>
+
+                        <div class="knob-name">Resonance</div>
+                        <output id="bass-resonance-value" class="knob-value">0.30</output>
+                    </div>
+                </section>
+
+                <section class="module">
+                    <h2>Envelope</h2>
+
+                    <div class="knob-control" data-knob data-input="bass-env-mod" data-output="bass-env-mod-value">
+                        <div class="knob">
+                            <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                                <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                                <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            </svg>
+
+                            <div class="indicator"></div>
+                            <div class="knob-center"></div>
+
+                            <input id="bass-env-mod" type="range" min="0" max="1" step="0.01" value="0.5">
+                        </div>
+
+                        <div class="knob-name">Env Mod</div>
+                        <output id="bass-env-mod-value" class="knob-value">0.50</output>
+                    </div>
+
+                    <div class="knob-control" data-knob data-input="bass-decay" data-output="bass-decay-value">
+                        <div class="knob">
+                            <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                                <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                                <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            </svg>
+
+                            <div class="indicator"></div>
+                            <div class="knob-center"></div>
+
+                            <input id="bass-decay" type="range" min="0.02" max="2" step="0.01" value="0.2">
+                        </div>
+
+                        <div class="knob-name">Decay</div>
+                        <output id="bass-decay-value" class="knob-value">200 ms</output>
+                    </div>
+                </section>
+
+                <section class="module">
+                    <h2>Accent / Glide</h2>
+
+                    <div class="knob-control" data-knob data-input="bass-accent-amount" data-output="bass-accent-amount-value">
+                        <div class="knob">
+                            <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                                <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                                <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            </svg>
+
+                            <div class="indicator"></div>
+                            <div class="knob-center"></div>
+
+                            <input id="bass-accent-amount" type="range" min="0" max="1" step="0.01" value="0.5">
+                        </div>
+
+                        <div class="knob-name">Accent</div>
+                        <output id="bass-accent-amount-value" class="knob-value">0.50</output>
+                    </div>
+
+                    <div class="knob-control" data-knob data-input="bass-glide-time" data-output="bass-glide-time-value">
+                        <div class="knob">
+                            <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                                <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                                <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            </svg>
+
+                            <div class="indicator"></div>
+                            <div class="knob-center"></div>
+
+                            <input id="bass-glide-time" type="range" min="0.01" max="1" step="0.01" value="0.06">
+                        </div>
+
+                        <div class="knob-name">Glide Time</div>
+                        <output id="bass-glide-time-value" class="knob-value">60 ms</output>
+                    </div>
+                </section>
+
+                <section class="module">
+                    <h2>Output</h2>
+
+                    <div class="knob-control" data-knob data-input="bass-master-volume" data-output="bass-master-volume-value">
+                        <div class="knob">
+                            <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                                <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                                <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            </svg>
+
+                            <div class="indicator"></div>
+                            <div class="knob-center"></div>
+
+                            <input id="bass-master-volume" type="range" min="0" max="1" step="0.01" value="0.5">
+                        </div>
+
+                        <div class="knob-name">Master</div>
+                        <output id="bass-master-volume-value" class="knob-value">0.50</output>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div id="mixer-view" class="view" hidden>
+            <div class="mixer-strips" id="mixer-strips"></div>
         </div>
 
         <nav class="site-nav">
@@ -1478,38 +2144,134 @@
         const wasmModule =
             await WebAssembly.compile(wasmBytes);
 
+        // sits between the session engine and audio.destination, so
+        // recording captures whatever mix is actually playing regardless
+        // of which tab is visible
         await audio.audioWorklet.addModule(
-            `./js/synth-worklet.js?v=${Date.now()}`
+            `./js/recorder-worklet.js?v=${Date.now()}`
         );
 
-        const node =
-            new AudioWorkletNode(
-                audio,
-                "synth-processor",
-                {
-                    numberOfInputs: 0,
-                    numberOfOutputs: 1,
-                    outputChannelCount: [2],
-
-                    processorOptions: {
-                        wasmModule
-                    }
-                }
-            );
-
-        node.connect(audio.destination);
-
-        node.port.onmessage = event => {
-            if (
-                event.data.type === "error" ||
-                event.data.type === "warning"
-            ) {
-                console.error(
-                    "[Synth worklet]",
-                    event.data.message
-                );
+        const recorderNode = new AudioWorkletNode(
+            audio,
+            "recorder-processor",
+            {
+                numberOfInputs: 1,
+                numberOfOutputs: 1,
+                outputChannelCount: [2]
             }
+        );
+
+        recorderNode.connect(audio.destination);
+
+        // --- drum samples ----------------------------------------------
+        //
+        // SessionEngine's constructor needs all 11 one-shots up front (it
+        // owns the drum machine internally, unlike the old split-engine
+        // setup where the synth could start before any of this loaded) --
+        // fetched in parallel so this one-time cost stays as small as
+        // possible before anything on the page becomes interactive.
+
+        const drumStatus = document.getElementById("drum-status");
+
+        async function fetchAndDecodeDrumSample(path) {
+            const response = await fetch(path);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${path}: ${response.status}`);
+            }
+
+            const arrayBuffer = await response.arrayBuffer();
+            const audioBuffer = await audio.decodeAudioData(arrayBuffer);
+
+            return audioBuffer.getChannelData(0);
+        }
+
+        const DRUM_SAMPLE_FILES = {
+            kick: "./samples/kick.wav",
+            snare: "./samples/snare.wav",
+            clap: "./samples/clap.wav",
+            rimshot: "./samples/rimshot.wav",
+            tomLow: "./samples/tom-low.wav",
+            tomMid: "./samples/tom-mid.wav",
+            tomHi: "./samples/tom-hi.wav",
+            hihatClosed: "./samples/hihat-closed.wav",
+            hihatOpen: "./samples/hihat-open.wav",
+            crash: "./samples/crash.wav",
+            ride: "./samples/ride.wav"
         };
+
+        const drumSampleEntries = await Promise.all(
+            Object.entries(DRUM_SAMPLE_FILES).map(
+                async ([key, path]) => [key, await fetchAndDecodeDrumSample(path)]
+            )
+        );
+
+        const drumSamples = Object.fromEntries(drumSampleEntries);
+
+        drumStatus.textContent = "Loading engine…";
+
+        // --- the unified engine ------------------------------------------
+        //
+        // One SessionEngine backs every tab: drums and bass share its one
+        // Transport (so their step sequencers stay locked together), the
+        // synth plays live on top untouched by transport state, and the
+        // mixer tab reaches all three through it. 16 steps / 120 BPM here
+        // must match DrumMachine's own hardcoded 16-step/120bpm pattern
+        // Rust-side, or the shared transport and the drum machine's
+        // internal clock drift out of sync.
+
+        const NUM_STEPS = 16;
+        const VOICE_COUNT = 8;
+
+        await audio.audioWorklet.addModule(
+            `./js/session-worklet.js?v=${Date.now()}`
+        );
+
+        const sessionNode = new AudioWorkletNode(
+            audio,
+            "session-processor",
+            {
+                numberOfInputs: 0,
+                numberOfOutputs: 1,
+                outputChannelCount: [2],
+                processorOptions: {
+                    wasmModule,
+                    samples: drumSamples,
+                    numSteps: NUM_STEPS,
+                    bpm: 120,
+                    stepsPerBeat: null,
+                    voiceCount: VOICE_COUNT
+                }
+            }
+        );
+
+        sessionNode.connect(recorderNode);
+
+        // was a "Ready" message here -- nothing left to announce once the
+        // engine's up, so just clear the loading text instead
+        drumStatus.hidden = true;
+
+        function send(type, value, extra = {}) {
+            sessionNode.port.postMessage({
+                type,
+                value,
+                ...extra
+            });
+        }
+
+        function sendNoteOn(frequency) {
+            sessionNode.port.postMessage({
+                type: "note-on",
+                frequency
+            });
+        }
+
+        function sendNoteOff(frequency) {
+            sessionNode.port.postMessage({
+                type: "note-off",
+                frequency
+            });
+        }
 
         const startButton =
             document.getElementById("start");
@@ -1520,35 +2282,15 @@
         async function startAudio() {
             await audio.resume();
 
-            startButton.disabled = true;
-            startButton.textContent = "Running";
+            startButton.classList.add("running");
+            startButton.title = "Audio running";
+            startButton.setAttribute("aria-label", "Audio running");
         }
 
         startButton.addEventListener(
             "click",
             startAudio
         );
-
-        function send(type, value) {
-            node.port.postMessage({
-                type,
-                value
-            });
-        }
-
-        function sendNoteOn(frequency) {
-            node.port.postMessage({
-                type: "note-on",
-                frequency
-            });
-        }
-
-        function sendNoteOff(frequency) {
-            node.port.postMessage({
-                type: "note-off",
-                frequency
-            });
-        }
 
         function clamp(value, minimum, maximum) {
             return Math.min(
@@ -1570,7 +2312,8 @@
             outputId,
             format,
             messageType,
-            transform = value => value
+            transform = value => value,
+            extraPayload = {}
         }) {
             const input =
                 document.getElementById(inputId);
@@ -1629,7 +2372,8 @@
 
                 send(
                     messageType,
-                    transform(clamped)
+                    transform(clamped),
+                    extraPayload
                 );
             }
 
@@ -1812,7 +2556,7 @@
             outputId: "master-volume-value",
             format: value =>
                 value.toFixed(2),
-            messageType: "master-volume"
+            messageType: "synth-master-volume"
         });
 
         initializeKnob({
@@ -2114,11 +2858,10 @@
 
         // --- Drum machine (Drums tab) --------------------------------------
         //
-        // Reuses the same AudioContext (`audio`) and already-compiled
-        // `wasmModule` from the synth setup above -- both worklet nodes end
-        // up connected to the same audio.destination, so the drum sequencer
-        // keeps playing in the background regardless of which tab is
-        // visible, and the synth can be played live right on top of it.
+        // Rides sessionNode's shared Transport -- see the step/status
+        // listener set up below, right after this section, which fans
+        // playhead updates out to both the drum grid and the bass
+        // sequencer since they share one clock now.
 
         const DRUM_TRACKS = [
             "Kick", "Snare", "Clap", "Rimshot",
@@ -2126,7 +2869,7 @@
             "Hat Cl", "Hat Op", "Crash", "Ride"
         ];
 
-        const DRUM_STEP_COUNT = 16;
+        const DRUM_STEP_COUNT = NUM_STEPS;
 
         // params per track, in the order their knobs should render --
         // mirrors DrumMachine's build_all_tracks order and SampleTrackType's
@@ -2147,81 +2890,10 @@
 
         const drumTrackStatus = new Array(DRUM_TRACKS.length).fill(0);
 
-        const drumStatus = document.getElementById("drum-status");
         const drumSequencerEl = document.getElementById("drum-sequencer");
 
-        async function fetchAndDecodeDrumSample(path) {
-            const response = await fetch(path);
-
-            if (!response.ok) {
-                throw new Error(`Failed to fetch ${path}: ${response.status}`);
-            }
-
-            const arrayBuffer = await response.arrayBuffer();
-            const audioBuffer = await audio.decodeAudioData(arrayBuffer);
-
-            return audioBuffer.getChannelData(0);
-        }
-
-        const DRUM_SAMPLE_FILES = {
-            kick: "./samples/kick.wav",
-            snare: "./samples/snare.wav",
-            clap: "./samples/clap.wav",
-            rimshot: "./samples/rimshot.wav",
-            tomLow: "./samples/tom-low.wav",
-            tomMid: "./samples/tom-mid.wav",
-            tomHi: "./samples/tom-hi.wav",
-            hihatClosed: "./samples/hihat-closed.wav",
-            hihatOpen: "./samples/hihat-open.wav",
-            crash: "./samples/crash.wav",
-            ride: "./samples/ride.wav"
-        };
-
-        const drumSamples = {};
-
-        for (const [key, path] of Object.entries(DRUM_SAMPLE_FILES)) {
-            drumSamples[key] = await fetchAndDecodeDrumSample(path);
-        }
-
-        drumStatus.textContent = "Loading engine…";
-
-        await audio.audioWorklet.addModule(
-            `./js/drum-worklet.js?v=${Date.now()}`
-        );
-
-        const drumNode = new AudioWorkletNode(
-            audio,
-            "drum-machine-processor",
-            {
-                numberOfInputs: 0,
-                numberOfOutputs: 1,
-                outputChannelCount: [2],
-                processorOptions: {
-                    wasmModule,
-                    samples: drumSamples
-                }
-            }
-        );
-
-        drumNode.connect(audio.destination);
-
-        drumNode.port.onmessage = event => {
-            const message = event.data;
-
-            if (message.type === "error" || message.type === "warning") {
-                console.error("[Drum machine worklet]", message.message);
-                return;
-            }
-
-            if (message.type === "step") {
-                highlightDrumStep(message.step);
-            }
-        };
-
-        drumStatus.textContent = "Ready — press Play or click a track name";
-
         function sendDrum(type, payload = {}) {
-            drumNode.port.postMessage({ type, ...payload });
+            sessionNode.port.postMessage({ type, ...payload });
         }
 
         function updateDrumTrackButtons(row, trackIndex) {
@@ -2247,11 +2919,11 @@
         };
 
         const DRUM_PARAM_MESSAGE_TYPES = {
-            level: "set-track-volume",
-            tune: "set-track-tune",
-            attack: "set-track-attack",
-            decay: "set-track-decay",
-            snappy: "set-track-snappy"
+            level: "set-drum-track-volume",
+            tune: "set-drum-track-tune",
+            attack: "set-drum-track-attack",
+            decay: "set-drum-track-decay",
+            snappy: "set-drum-track-snappy"
         };
 
         function mapDrumKnobValue(paramKey, knobValue) {
@@ -2351,7 +3023,7 @@
 
             trigger.addEventListener("click", async () => {
                 await startAudio();
-                sendDrum("trigger-track", { track: trackIndex });
+                sendDrum("trigger-drum-track", { track: trackIndex });
             });
 
             const mute = document.createElement("button");
@@ -2362,7 +3034,7 @@
             mute.addEventListener("click", () => {
                 drumTrackStatus[trackIndex] = drumTrackStatus[trackIndex] === 2 ? 0 : 2;
                 updateDrumTrackButtons(row, trackIndex);
-                sendDrum("set-track-status", { track: trackIndex, value: drumTrackStatus[trackIndex] });
+                sendDrum("set-drum-track-status", { track: trackIndex, value: drumTrackStatus[trackIndex] });
             });
 
             const solo = document.createElement("button");
@@ -2373,7 +3045,7 @@
             solo.addEventListener("click", () => {
                 drumTrackStatus[trackIndex] = drumTrackStatus[trackIndex] === 1 ? 0 : 1;
                 updateDrumTrackButtons(row, trackIndex);
-                sendDrum("set-track-status", { track: trackIndex, value: drumTrackStatus[trackIndex] });
+                sendDrum("set-drum-track-status", { track: trackIndex, value: drumTrackStatus[trackIndex] });
             });
 
             const steps = document.createElement("div");
@@ -2388,7 +3060,7 @@
 
                 cell.addEventListener("click", () => {
                     const active = cell.classList.toggle("active");
-                    sendDrum("set-step", { step, track: trackIndex, active });
+                    sendDrum("set-drum-step", { step, track: trackIndex, active });
                 });
 
                 steps.appendChild(cell);
@@ -2414,49 +3086,704 @@
             drumSequencerEl.appendChild(row);
         });
 
-        document.getElementById("drum-play").addEventListener("click", async () => {
-            await startAudio();
-            sendDrum("play");
+        initializeKnob({
+            inputId: "drum-master-volume",
+            outputId: "drum-master-volume-value",
+            format: value => value.toFixed(2),
+            messageType: "set-drum-master-volume"
         });
 
-        document.getElementById("drum-pause").addEventListener("click", () => {
-            sendDrum("pause");
-        });
-
-        document.getElementById("drum-stop").addEventListener("click", () => {
-            sendDrum("stop");
-        });
-
-        document.getElementById("drum-bpm").addEventListener("change", event => {
-            sendDrum("set-bpm", { value: Number(event.target.value) });
-        });
-
-        document.getElementById("drum-master-volume").addEventListener("input", event => {
-            sendDrum("set-master-volume", { value: Number(event.target.value) });
-        });
-
-        // --- Tab switching (Synth / Drums) ----------------------------------
+        // --- Bass (Bass tab) -------------------------------------------------
         //
-        // Only toggles which view is visible -- both worklet nodes stay
-        // connected and processing regardless, so switching tabs never
-        // interrupts either engine's audio
+        // Rides the same shared Transport as the drum machine above (see
+        // the step/status listener right below) -- adapted from the
+        // standalone acid.html test page's UI, now wired to sessionNode
+        // instead of its own AcidSynthEngine/worklet.
 
-        const synthView = document.getElementById("synth-view");
-        const drumsView = document.getElementById("drums-view");
+        const ROOT_FREQUENCY = 110.0; // A2 -- a reasonable acid bassline root
+
+        // two octaves, one below the root and one above -- a real 303's
+        // playable range is around this size before you'd reach for the
+        // instrument's own up/down transpose
+        const BASS_MIN_SEMITONE = -12;
+        const BASS_MAX_SEMITONE = 12;
+
+        // note names start at C (not A) because octave numbers increment
+        // at C in standard notation, not at the root note
+        const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const ROOT_ABSOLUTE_SEMITONE = 33; // A2 == octave 2 (2*12) + index of "A" (9)
+
+        function noteFrequency(semitoneOffset) {
+            return ROOT_FREQUENCY * Math.pow(2, semitoneOffset / 12);
+        }
+
+        function noteName(semitoneOffset) {
+            const absolute = ROOT_ABSOLUTE_SEMITONE + semitoneOffset;
+            const octave = Math.floor(absolute / 12);
+            const index = ((absolute % 12) + 12) % 12;
+
+            return `${NOTE_NAMES[index]}${octave}`;
+        }
+
+        const bassSteps = Array.from({ length: NUM_STEPS }, () => ({
+            semitone: 0,
+            gate: false,
+            accent: false,
+            slide: false
+        }));
+
+        const bassSequencerEl = document.getElementById("bass-sequencer");
+
+        function sendBass(type, payload = {}) {
+            sessionNode.port.postMessage({ type, ...payload });
+        }
+
+        function highlightBassStep(currentStep) {
+            bassSequencerEl.querySelectorAll(".acid-step-cell").forEach(cell => {
+                cell.classList.toggle("current", Number(cell.dataset.step) === currentStep);
+            });
+        }
+
+        function sendBassStep(index) {
+            const step = bassSteps[index];
+
+            sendBass("set-acid-step", {
+                index,
+                note: noteFrequency(step.semitone),
+                gate: step.gate,
+                accent: step.accent,
+                slide: step.slide
+            });
+        }
+
+        bassSteps.forEach((step, index) => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "acid-step";
+
+            const cell = document.createElement("button");
+            cell.type = "button";
+            cell.className = "acid-step-cell";
+            cell.dataset.step = index;
+            cell.textContent = noteName(step.semitone);
+            cell.title = "Toggle this step on/off";
+
+            cell.addEventListener("click", async () => {
+                await startAudio();
+
+                step.gate = !step.gate;
+                cell.classList.toggle("active", step.gate);
+
+                sendBassStep(index);
+            });
+
+            const noteSelect = document.createElement("select");
+            noteSelect.className = "acid-step-note";
+            noteSelect.title = "Note for this step";
+
+            for (let semitone = BASS_MIN_SEMITONE; semitone <= BASS_MAX_SEMITONE; semitone++) {
+                const option = document.createElement("option");
+                option.value = semitone;
+                option.textContent = noteName(semitone);
+
+                if (semitone === step.semitone) {
+                    option.selected = true;
+                }
+
+                noteSelect.appendChild(option);
+            }
+
+            noteSelect.addEventListener("change", async () => {
+                await startAudio();
+
+                step.semitone = Number(noteSelect.value);
+                cell.textContent = noteName(step.semitone);
+
+                sendBassStep(index);
+            });
+
+            const flags = document.createElement("div");
+            flags.className = "acid-step-flags";
+
+            const accentFlag = document.createElement("button");
+            accentFlag.type = "button";
+            accentFlag.className = "acid-step-flag";
+            accentFlag.textContent = "A";
+            accentFlag.title = "Accent";
+
+            accentFlag.addEventListener("click", () => {
+                step.accent = !step.accent;
+                accentFlag.classList.toggle("active", step.accent);
+                sendBassStep(index);
+            });
+
+            const slideFlag = document.createElement("button");
+            slideFlag.type = "button";
+            slideFlag.className = "acid-step-flag";
+            slideFlag.textContent = "S";
+            slideFlag.title = "Slide";
+
+            slideFlag.addEventListener("click", () => {
+                step.slide = !step.slide;
+                slideFlag.classList.toggle("active", step.slide);
+                sendBassStep(index);
+            });
+
+            flags.append(accentFlag, slideFlag);
+            wrapper.append(cell, noteSelect, flags);
+            bassSequencerEl.appendChild(wrapper);
+        });
+
+        initializeKnob({
+            inputId: "bass-master-volume",
+            outputId: "bass-master-volume-value",
+            format: value => value.toFixed(2),
+            messageType: "set-acid-master-volume"
+        });
+
+        document.getElementById("bass-waveform").addEventListener("change", event => {
+            sendBass("set-acid-waveform", { value: Number(event.target.value) });
+        });
+
+        initializeKnob({
+            inputId: "bass-tuning",
+            outputId: "bass-tuning-value",
+            format: value => `${value > 0 ? "+" : ""}${Math.round(value)} st`,
+            messageType: "set-acid-tuning"
+        });
+
+        initializeKnob({
+            inputId: "bass-cutoff",
+            outputId: "bass-cutoff-value",
+            format: position => {
+                const frequency = logarithmicFrequency(position, 100, 8000);
+                return frequency >= 1000 ? `${(frequency / 1000).toFixed(1)} kHz` : `${Math.round(frequency)} Hz`;
+            },
+            messageType: "set-acid-cutoff",
+            transform: position => logarithmicFrequency(position, 100, 8000)
+        });
+
+        initializeKnob({
+            inputId: "bass-resonance",
+            outputId: "bass-resonance-value",
+            format: value => value.toFixed(2),
+            messageType: "set-acid-resonance"
+        });
+
+        initializeKnob({
+            inputId: "bass-env-mod",
+            outputId: "bass-env-mod-value",
+            format: value => value.toFixed(2),
+            messageType: "set-acid-env-mod"
+        });
+
+        initializeKnob({
+            inputId: "bass-decay",
+            outputId: "bass-decay-value",
+            format: value => `${Math.round(value * 1000)} ms`,
+            messageType: "set-acid-decay"
+        });
+
+        initializeKnob({
+            inputId: "bass-accent-amount",
+            outputId: "bass-accent-amount-value",
+            format: value => value.toFixed(2),
+            messageType: "set-acid-accent-amount"
+        });
+
+        initializeKnob({
+            inputId: "bass-glide-time",
+            outputId: "bass-glide-time-value",
+            format: value => `${Math.round(value * 1000)} ms`,
+            messageType: "set-acid-glide-time"
+        });
+
+        // initial waveform push, matching bindSelect's own pattern above
+        sendBass("set-acid-waveform", { value: Number(document.getElementById("bass-waveform").value) });
+
+        // --- Mixer (Mixer tab) -----------------------------------------------
+        //
+        // DJ-mixer channel-strip logic, top to bottom: High, Mid, Low,
+        // Pan, a VU meter beside the fader, then Mute/Solo at the very
+        // bottom -- plus a Master panel with its own VU meter and volume
+        // knob. `index` mirrors Session's own DRUM_CHANNEL/ACID_CHANNEL/
+        // SYNTH_CHANNEL constants (also exported from wasm as
+        // drum_channel()/acid_channel()/synth_channel()); display order
+        // (Synth, Drums, Bass) is independent of that index order.
+
+        const MIXER_CHANNELS = [
+            { key: "synth", index: 2, label: "Synth" },
+            { key: "drum", index: 0, label: "Drums" },
+            { key: "bass", index: 1, label: "Bass" }
+        ];
+
+        const mixerStripsEl = document.getElementById("mixer-strips");
+        const mixerChannelStatus = new Array(MIXER_CHANNELS.length).fill(0);
+        const channelVuMeters = new Array(MIXER_CHANNELS.length).fill(null);
+        let masterVuMeterLeft = null;
+        let masterVuMeterRight = null;
+
+        function updateMixerButtons(index, muteEl, soloEl) {
+            muteEl.classList.toggle("active", mixerChannelStatus[index] === 2);
+            soloEl.classList.toggle("active", mixerChannelStatus[index] === 1);
+        }
+
+        // builds the same DOM shape the static synth/bass knobs use above,
+        // so initializeKnob (which looks its elements up by id) works on
+        // it unmodified
+        function buildKnobMarkup({ inputId, outputId, name, min, max, step, value }) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "knob-control";
+            wrapper.setAttribute("data-knob", "");
+            wrapper.dataset.input = inputId;
+            wrapper.dataset.output = outputId;
+
+            wrapper.innerHTML = `
+                <div class="knob">
+                    <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                        <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                        <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                    </svg>
+                    <div class="indicator"></div>
+                    <div class="knob-center"></div>
+                    <input id="${inputId}" type="range" min="${min}" max="${max}" step="${step}" value="${value}">
+                </div>
+                <div class="knob-name">${name}</div>
+                <output id="${outputId}" class="knob-value"></output>
+            `;
+
+            return wrapper;
+        }
+
+        // digital segmented level bar, Pioneer-style: bottom ~2/3 green,
+        // next ~1/6 yellow, top ~1/6 red -- amplitude is mapped to dBFS
+        // (not linear) since that's what actually reads as "even" steps
+        // to the eye across a wide dynamic range
+        const VU_SEGMENT_COUNT = 12;
+        const VU_MIN_DB = -48;
+        const VU_MAX_DB = 3; // a little headroom above unity to show clipping
+
+        function peakToLitSegments(peak) {
+            const db = peak > 0 ? 20 * Math.log10(peak) : VU_MIN_DB;
+            const clamped = Math.max(VU_MIN_DB, Math.min(VU_MAX_DB, db));
+            const normalized = (clamped - VU_MIN_DB) / (VU_MAX_DB - VU_MIN_DB);
+
+            return Math.round(normalized * VU_SEGMENT_COUNT);
+        }
+
+        function vuSegmentColor(index) {
+            if (index < 8) return "green";
+            if (index < 10) return "yellow";
+            return "red";
+        }
+
+        function createVuMeter() {
+            const meter = document.createElement("div");
+            meter.className = "vu-meter";
+
+            const segments = [];
+
+            for (let i = 0; i < VU_SEGMENT_COUNT; i++) {
+                const segment = document.createElement("div");
+                segment.className = "vu-segment";
+                segment.dataset.color = vuSegmentColor(i);
+                meter.appendChild(segment);
+                segments.push(segment);
+            }
+
+            function update(peak) {
+                const lit = peakToLitSegments(peak);
+                segments.forEach((segment, index) => {
+                    segment.classList.toggle("lit", index < lit);
+                });
+            }
+
+            return { element: meter, update };
+        }
+
+        function sendMixer(type, payload = {}) {
+            sessionNode.port.postMessage({ type, ...payload });
+        }
+
+        // top to bottom on a real channel strip -- Hi first
+        const MIXER_EQ_BANDS = [
+            { key: "high", label: "Hi", messageType: "set-channel-eq-high-gain" },
+            { key: "mid", label: "Mid", messageType: "set-channel-eq-mid-gain" },
+            { key: "low", label: "Lo", messageType: "set-channel-eq-low-gain" }
+        ];
+
+        MIXER_CHANNELS.forEach(channel => {
+            const strip = document.createElement("section");
+            strip.className = "mixer-strip";
+
+            const heading = document.createElement("h2");
+            heading.textContent = channel.label;
+            strip.appendChild(heading);
+
+            // initializeKnob() looks its elements up with getElementById,
+            // which only finds nodes already attached to the live
+            // document -- so every knob here just builds its markup now
+            // and defers the actual initializeKnob() call until after
+            // this whole strip is appended to mixerStripsEl below
+            const pendingKnobs = [];
+
+            // Hi/Mid/Low on the left, this channel's own VU meter to
+            // their right -- align-items:stretch (the default) pins the
+            // meter's height to exactly span top-of-Hi to bottom-of-Low
+            const eqRow = document.createElement("div");
+            eqRow.className = "mixer-eq-row";
+
+            const eqKnobs = document.createElement("div");
+            eqKnobs.className = "mixer-eq-knobs";
+
+            MIXER_EQ_BANDS.forEach(band => {
+                const inputId = `mixer-${channel.key}-eq-${band.key}`;
+                const outputId = `${inputId}-value`;
+
+                const knobWrapper = document.createElement("div");
+                knobWrapper.className = "mixer-knob";
+                knobWrapper.appendChild(buildKnobMarkup({
+                    inputId, outputId, name: band.label,
+                    min: 0, max: 2, step: 0.01, value: 1
+                }));
+                eqKnobs.appendChild(knobWrapper);
+
+                pendingKnobs.push({
+                    inputId, outputId,
+                    format: value => value.toFixed(2),
+                    messageType: band.messageType,
+                    extraPayload: { channel: channel.index }
+                });
+            });
+
+            const vuMeter = createVuMeter();
+            channelVuMeters[channel.index] = vuMeter;
+
+            eqRow.append(eqKnobs, vuMeter.element);
+            strip.appendChild(eqRow);
+
+            const panInputId = `mixer-${channel.key}-pan`;
+            const panOutputId = `${panInputId}-value`;
+
+            const panWrapper = document.createElement("div");
+            panWrapper.className = "mixer-knob";
+            panWrapper.appendChild(buildKnobMarkup({
+                inputId: panInputId, outputId: panOutputId, name: "Pan",
+                min: -1, max: 1, step: 0.01, value: 0
+            }));
+            strip.appendChild(panWrapper);
+
+            pendingKnobs.push({
+                inputId: panInputId, outputId: panOutputId,
+                format: value => value === 0 ? "C" : `${Math.round(Math.abs(value) * 100)}${value < 0 ? "L" : "R"}`,
+                messageType: "set-channel-pan",
+                extraPayload: { channel: channel.index }
+            });
+
+            const fader = document.createElement("div");
+            fader.className = "mixer-fader";
+
+            const faderTrack = document.createElement("div");
+            faderTrack.className = "mixer-fader-track";
+
+            const faderInput = document.createElement("input");
+            faderInput.type = "range";
+            faderInput.className = "fader-input";
+            faderInput.min = "0";
+            faderInput.max = "1";
+            faderInput.step = "0.01";
+            faderInput.value = "1";
+
+            const faderValue = document.createElement("output");
+            faderValue.className = "mixer-fader-value";
+            faderValue.textContent = "1.00";
+
+            faderInput.addEventListener("input", () => {
+                const value = Number(faderInput.value);
+                faderValue.textContent = value.toFixed(2);
+                sendMixer("set-channel-volume", { channel: channel.index, value });
+            });
+
+            faderTrack.appendChild(faderInput);
+            fader.append(faderTrack, faderValue);
+
+            const faderRow = document.createElement("div");
+            faderRow.className = "mixer-fader-row";
+            faderRow.appendChild(fader);
+            strip.appendChild(faderRow);
+
+            const buttons = document.createElement("div");
+            buttons.className = "mixer-buttons";
+
+            const mute = document.createElement("button");
+            mute.type = "button";
+            mute.className = "mixer-mute";
+            mute.textContent = "M";
+
+            const solo = document.createElement("button");
+            solo.type = "button";
+            solo.className = "mixer-solo";
+            solo.textContent = "S";
+
+            mute.addEventListener("click", () => {
+                mixerChannelStatus[channel.index] = mixerChannelStatus[channel.index] === 2 ? 0 : 2;
+                updateMixerButtons(channel.index, mute, solo);
+                sendMixer("set-channel-status", { channel: channel.index, value: mixerChannelStatus[channel.index] });
+            });
+
+            solo.addEventListener("click", () => {
+                mixerChannelStatus[channel.index] = mixerChannelStatus[channel.index] === 1 ? 0 : 1;
+                updateMixerButtons(channel.index, mute, solo);
+                sendMixer("set-channel-status", { channel: channel.index, value: mixerChannelStatus[channel.index] });
+            });
+
+            buttons.append(mute, solo);
+            strip.appendChild(buttons);
+
+            mixerStripsEl.appendChild(strip);
+
+            pendingKnobs.forEach(knob => initializeKnob(knob));
+
+            sendMixer("set-channel-volume", { channel: channel.index, value: 1 });
+        });
+
+        // --- Master panel: a stereo VU meter (this is the one place in
+        // the mixer where the two sides actually need to be seen
+        // independently) + a single master volume knob. Its own height
+        // is left tall/roomy on purpose, unlike the per-channel meters --
+        // there's room here later for FX sends without cramping the meter.
+
+        const masterStrip = document.createElement("section");
+        masterStrip.className = "mixer-strip mixer-master";
+
+        const masterHeading = document.createElement("h2");
+        masterHeading.textContent = "Master";
+        masterStrip.appendChild(masterHeading);
+
+        function buildMasterMeter(label) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "mixer-master-meter";
+
+            const vuMeter = createVuMeter();
+
+            const labelEl = document.createElement("div");
+            labelEl.className = "mixer-master-meter-label";
+            labelEl.textContent = label;
+
+            wrapper.append(vuMeter.element, labelEl);
+
+            return { wrapper, vuMeter };
+        }
+
+        const leftMeter = buildMasterMeter("L");
+        const rightMeter = buildMasterMeter("R");
+        masterVuMeterLeft = leftMeter.vuMeter;
+        masterVuMeterRight = rightMeter.vuMeter;
+
+        const masterMeterRow = document.createElement("div");
+        masterMeterRow.className = "mixer-master-meters";
+        masterMeterRow.append(leftMeter.wrapper, rightMeter.wrapper);
+        masterStrip.appendChild(masterMeterRow);
+
+        masterStrip.appendChild(buildKnobMarkup({
+            inputId: "mixer-master-volume", outputId: "mixer-master-volume-value", name: "Volume",
+            min: 0, max: 1, step: 0.01, value: 1
+        }));
+
+        mixerStripsEl.appendChild(masterStrip);
+
+        initializeKnob({
+            inputId: "mixer-master-volume",
+            outputId: "mixer-master-volume-value",
+            format: value => value.toFixed(2),
+            messageType: "set-mixer-master-volume"
+        });
+
+        // --- Transport (global) + step/status listener -----------------------
+        //
+        // Shared by drums and bass -- one Transport, so one listener fans
+        // playhead/status updates out to both grids and the transport icons.
+
+        sessionNode.port.onmessage = event => {
+            const message = event.data;
+
+            if (message.type === "error" || message.type === "warning") {
+                console.error("[Session worklet]", message.message);
+                return;
+            }
+
+            if (message.type === "step") {
+                highlightDrumStep(message.step);
+                highlightBassStep(message.step);
+                return;
+            }
+
+            if (message.type === "status") {
+                updateTransportButtons(message.status);
+                return;
+            }
+
+            if (message.type === "levels") {
+                message.channels.forEach((peak, index) => {
+                    channelVuMeters[index]?.update(peak);
+                });
+                masterVuMeterLeft?.update(message.masterLeft);
+                masterVuMeterRight?.update(message.masterRight);
+            }
+        };
+
+        const transportPlayButton = document.getElementById("transport-play");
+        const transportPauseButton = document.getElementById("transport-pause");
+        const transportStopButton = document.getElementById("transport-stop");
+        const transportBpmInput = document.getElementById("transport-bpm");
+
+        // 0 = Play, 1 = Pause, 2 = Stop -- matches SessionEngine::sequencer_status()
+        function updateTransportButtons(status) {
+            transportPlayButton.classList.toggle("active", status === 0);
+            transportPauseButton.classList.toggle("active", status === 1);
+            transportStopButton.classList.toggle("active", status === 2);
+        }
+
+        transportPlayButton.addEventListener("click", async () => {
+            await startAudio();
+            send("play");
+        });
+
+        transportPauseButton.addEventListener("click", () => {
+            send("pause");
+        });
+
+        transportStopButton.addEventListener("click", () => {
+            send("stop");
+        });
+
+        transportBpmInput.addEventListener("change", event => {
+            send("set-bpm", Number(event.target.value));
+        });
+
+        updateTransportButtons(2); // Stop, matching Transport::new's own default
+
+        // --- Tab switching (Synth / Drums / Bass / Mixer) ---------------------
+        //
+        // Only toggles which view is visible -- the one sessionNode stays
+        // connected and processing regardless, so switching tabs never
+        // interrupts anything
+
+        const VIEWS = ["synth", "drums", "bass", "mixer"];
+        const viewElements = Object.fromEntries(
+            VIEWS.map(view => [view, document.getElementById(`${view}-view`)])
+        );
         const engineTabs = document.querySelectorAll(".engine-tab");
+
+        const VIEW_SUBTITLES = {
+            synth: "VS-2: Subtractive Synth",
+            drums: "VS-909: Rhythm Composer",
+            bass: "VS-303: Bassline Sequencer",
+            mixer: "VSM-900: Multi-Channel Mixer"
+        };
+
+        const viewSubtitleEl = document.getElementById("view-subtitle");
 
         engineTabs.forEach(tab => {
             tab.addEventListener("click", () => {
                 const view = tab.dataset.view;
 
-                synthView.hidden = view !== "synth";
-                drumsView.hidden = view !== "drums";
+                VIEWS.forEach(candidate => {
+                    viewElements[candidate].hidden = candidate !== view;
+                });
 
                 engineTabs.forEach(other => {
                     other.classList.toggle("active", other === tab);
                     other.setAttribute("aria-selected", other === tab ? "true" : "false");
                 });
+
+                viewSubtitleEl.textContent = VIEW_SUBTITLES[view];
             });
+        });
+
+        // --- Recording -------------------------------------------------
+        //
+        // Captures sessionNode's single mixed-down output through
+        // recorderNode -- synth, drums, and bass all at once, whatever
+        // the mixer's own mute/solo/volume/pan settings resolve to,
+        // regardless of which tab is active.
+
+        function encodeWav(channelBuffers, sampleRate) {
+            const numChannels = channelBuffers.length;
+            const numFrames = numChannels > 0 ? channelBuffers[0].length : 0;
+            const bytesPerSample = 2; // 16-bit PCM
+            const blockAlign = numChannels * bytesPerSample;
+            const dataSize = numFrames * blockAlign;
+
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            function writeString(offset, text) {
+                for (let i = 0; i < text.length; i++) {
+                    view.setUint8(offset + i, text.charCodeAt(i));
+                }
+            }
+
+            writeString(0, "RIFF");
+            view.setUint32(4, 36 + dataSize, true);
+            writeString(8, "WAVE");
+            writeString(12, "fmt ");
+            view.setUint32(16, 16, true); // fmt chunk size
+            view.setUint16(20, 1, true); // PCM
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true); // byte rate
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bytesPerSample * 8, true); // bits per sample
+            writeString(36, "data");
+            view.setUint32(40, dataSize, true);
+
+            let offset = 44;
+            for (let frame = 0; frame < numFrames; frame++) {
+                for (let channel = 0; channel < numChannels; channel++) {
+                    const sample = Math.max(-1, Math.min(1, channelBuffers[channel][frame]));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+                    offset += 2;
+                }
+            }
+
+            return new Blob([buffer], { type: "audio/wav" });
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        const recordButton = document.getElementById("record");
+        let isRecording = false;
+
+        recorderNode.port.onmessage = event => {
+            const message = event.data;
+
+            if (message.type !== "recording") return;
+
+            if (message.channels.length === 0) return;
+
+            const blob = encodeWav(message.channels, audio.sampleRate);
+            downloadBlob(blob, `versasha-recording-${Date.now()}.wav`);
+        };
+
+        recordButton.addEventListener("click", async () => {
+            await startAudio();
+
+            isRecording = !isRecording;
+
+            recordButton.classList.toggle("recording", isRecording);
+            recordButton.title = isRecording ? "Stop Recording" : "Record";
+            recordButton.setAttribute("aria-label", recordButton.title);
+
+            recorderNode.port.postMessage({ type: isRecording ? "start" : "stop" });
         });
     </script>
 </body>
