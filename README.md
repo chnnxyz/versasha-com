@@ -155,7 +155,8 @@ the part of this project that's actually being learned and owned line by
 line. The frontend (`index.html`, its CSS, and the JS gluing it to the
 wasm engine) was built with AI assistance (Claude), not written by hand.
 If you're contributing, see [CONTRIBUTING.md](CONTRIBUTING.md) for what
-that means in practice for each part of the codebase.
+that means in practice for each part of the codebase, and
+[ROADMAP.md](ROADMAP.md) for planned features looking for outside help.
 
 ## License
 
