@@ -163,11 +163,18 @@ impl SampleTrack {
 
         if let Some(noise) = &mut self.noise {
             // always advance the generator so its state stays live even
-
+            // while snappy_amount is 0 or the player has finished
             let noise_sample = noise.next_sample();
 
             if player_active {
-                output = output * (1.0 - self.snappy_amount) + noise_sample * self.snappy_amount;
+                // shape the noise by the sample's own current amplitude
+                // instead of mixing it in at a flat level -- otherwise
+                // the noise stays just as loud while the sample
+                // naturally decays toward its tail (clashing with it),
+                // then hard-cuts the instant the one-shot ends instead
+                // of fading out along with it
+                let shaped_noise = noise_sample * output.abs();
+                output = output * (1.0 - self.snappy_amount) + shaped_noise * self.snappy_amount;
             }
         }
 
@@ -458,6 +465,29 @@ mod tests {
         // at snappy = 1.0 the mix formula collapses to 100% noise -- it
         // must not equal the untouched sample value
         assert_ne!(track.next_sample(), 0.3);
+    }
+
+    #[test]
+    fn snappy_noise_amplitude_follows_the_samples_own_envelope() {
+        // both tracks seed their NoiseGenerator identically (SampleTrack::new
+        // hardcodes seed 1), so on this first call each produces the exact
+        // same raw noise value -- any difference in the two outputs has to
+        // come from the shaping, not from the noise generator itself
+        let loud_sample = AudioSample::new(48_000.0, vec![0.9]);
+        let mut loud_track = SampleTrack::new(loud_sample, 48_000.0, SampleTrackType::Snare);
+        loud_track.set_snappy(1.0);
+
+        let quiet_sample = AudioSample::new(48_000.0, vec![0.1]);
+        let mut quiet_track = SampleTrack::new(quiet_sample, 48_000.0, SampleTrackType::Snare);
+        quiet_track.set_snappy(1.0);
+
+        let loud_output = loud_track.next_sample().abs();
+        let quiet_output = quiet_track.next_sample().abs();
+
+        assert!(
+            loud_output > quiet_output,
+            "expected the loud sample's noise contribution ({loud_output}) to be louder than the quiet sample's ({quiet_output}) -- noise should track the sample's own amplitude, not mix in at a flat level"
+        );
     }
 
     #[test]

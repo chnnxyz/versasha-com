@@ -5,9 +5,10 @@ import {
     SessionEngine
 } from "../pkg/versasha_com.js";
 
-// mirrors Session::DRUM_CHANNEL/ACID_CHANNEL/SYNTH_CHANNEL (also
-// available from wasm as drum_channel()/acid_channel()/synth_channel())
-const MIXER_CHANNEL_INDICES = [0, 1, 2];
+// mirrors Session::DRUM_CHANNEL/ACID_CHANNEL/SYNTH_CHANNEL/ARP_CHANNEL
+// (also available from wasm as drum_channel()/acid_channel()/
+// synth_channel()/arp_channel())
+const MIXER_CHANNEL_INDICES = [0, 1, 2, 3];
 
 // VU meter refresh rate -- every block (128 samples @ 44.1kHz, ~2.9ms)
 // would be needlessly chatty for something a human is just looking at;
@@ -273,6 +274,38 @@ class SessionProcessor extends AudioWorkletProcessor {
                 engine.set_acid_master_volume(Number(message.value));
                 break;
 
+            // --- arp -------------------------------------------------------
+            case "set-arp-step":
+                engine.set_arp_step(
+                    Number(message.index),
+                    Float32Array.from(message.notes ?? [])
+                );
+                break;
+
+            case "set-arp-mode":
+                engine.set_arp_mode(Number(message.value));
+                break;
+
+            case "set-arp-octave-range":
+                engine.set_arp_octave_range(Number(message.value));
+                break;
+
+            case "set-arp-division":
+                engine.set_arp_division(Number(message.value));
+                break;
+
+            case "set-arp-chord-division":
+                engine.set_arp_chord_division(Number(message.value));
+                break;
+
+            case "set-arp-master-volume":
+                engine.set_arp_master_volume(Number(message.value));
+                break;
+
+            case "set-arp-waveform":
+                engine.set_arp_waveform(Number(message.value));
+                break;
+
             // --- mixer -----------------------------------------------------
             case "set-channel-status":
                 engine.set_channel_status(Number(message.channel), Number(message.value));
@@ -300,6 +333,27 @@ class SessionProcessor extends AudioWorkletProcessor {
 
             case "set-mixer-master-volume":
                 engine.set_mixer_master_volume(Number(message.value));
+                break;
+
+            // --- Beat FX -----------------------------------------------------
+            case "set-beat-fx-active":
+                engine.set_beat_fx_active(Number(message.value));
+                break;
+
+            case "set-beat-fx-enabled":
+                engine.set_beat_fx_enabled(Boolean(message.value));
+                break;
+
+            case "set-beat-fx-division":
+                engine.set_beat_fx_division(Number(message.value));
+                break;
+
+            case "set-beat-fx-dry-wet":
+                engine.set_beat_fx_dry_wet(Number(message.value));
+                break;
+
+            case "set-beat-fx-channel":
+                engine.set_beat_fx_channel(Number(message.value));
                 break;
 
             default:
@@ -330,7 +384,10 @@ class SessionProcessor extends AudioWorkletProcessor {
         // report the current step only when it actually changes, so the
         // UI can highlight a playhead (drum grid and bass sequencer
         // share this one step, since both ride the same Transport) without
-        // spamming the main thread with a message on every single sample
+        // spamming the main thread with a message on every single sample.
+        // arpChord is which of the arp's 4 chord slots that raw step
+        // maps to (see Arp::chord_index_for_step) -- computed here so
+        // the UI doesn't have to duplicate that mapping in JS.
         const currentStep = this.engine.current_step();
 
         if (currentStep !== this.lastReportedStep) {
@@ -338,7 +395,8 @@ class SessionProcessor extends AudioWorkletProcessor {
 
             this.port.postMessage({
                 type: "step",
-                step: currentStep
+                step: currentStep,
+                arpChord: this.engine.arp_chord_index_for_step(currentStep)
             });
         }
 

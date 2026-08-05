@@ -56,6 +56,13 @@
     >
 
     <style>
+        /* wider than css/styles.css's shared .page (900px) -- this page
+           alone holds the instrument tabs/mixer strips, which need more
+           room than the other, simpler pages sharing that stylesheet */
+        main.page {
+            width: min(1100px, 100%);
+        }
+
         header {
             display: flex;
             flex-wrap: wrap;
@@ -144,8 +151,6 @@
            state, not something that needs deliberately clicking most of
            the time */
         #start {
-            margin-left: auto;
-
             width: 12px;
             height: 12px;
             padding: 0;
@@ -265,6 +270,26 @@
             fill: currentColor;
         }
 
+        /* every view shares one height on desktop, so switching tabs
+           never resizes the page (and never moves the header above it) --
+           each view's own content, which naturally varies in height, is
+           centered within that shared canvas instead of pinned to the
+           top. 700px comfortably fits a normal desktop browser viewport
+           without the page itself ever needing to scroll. */
+        @media (min-width: 761px) {
+            /* :not([hidden]) matters here -- plain .view{display:flex}
+               would override the [hidden] attribute's own display:none
+               (author CSS always wins over the UA stylesheet regardless
+               of specificity), making every view render at once */
+            .view:not([hidden]) {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+
+                min-height: 560px;
+            }
+        }
+
         .modules {
             display: grid;
             grid-template-columns:
@@ -297,7 +322,7 @@
         }
 
         .field {
-            margin-bottom: 22px;
+            margin-bottom: 16px;
         }
 
         .field:last-child {
@@ -574,7 +599,7 @@
 
         .drum-status,
         .bass-status {
-            margin-bottom: 20px;
+            margin-bottom: 14px;
 
             color: #888;
 
@@ -582,8 +607,13 @@
             text-transform: uppercase;
         }
 
-        .drum-master {
-            margin-bottom: 30px;
+        /* master's own knob sits in a column to the right of the whole
+           sequencer, vertically centered against its full height --
+           spanning every row rather than repeating per row */
+        .drum-sequencer-row {
+            display: flex;
+
+            margin-bottom: 18px;
         }
 
         .drum-sequencer {
@@ -591,9 +621,21 @@
             flex-direction: column;
             gap: 4px;
 
-            margin-bottom: 30px;
+            flex: 1;
+            min-width: 0;
 
             overflow-x: auto;
+        }
+
+        .drum-master-column {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex: 0 0 auto;
+            padding-left: 24px;
+
+            border-left: 1px solid #333;
         }
 
         .drum-track-row {
@@ -860,6 +902,121 @@
             color: #000;
         }
 
+        /* --- arp piano roll ---------------------------------------------
+           16 step columns (shared with drums/bass), a row of pitches
+           running high to low. Step headers are just column labels/
+           playhead indicators (no active/inactive toggle -- a step
+           with notes drawn into it is what plays, an empty step is a
+           no-op); each cell in the grid below toggles one note on/off
+           for that step's chord. */
+
+        .arp-editor {
+            margin-bottom: 18px;
+
+            overflow-x: auto;
+        }
+
+        .arp-step-row,
+        .arp-piano-row {
+            display: flex;
+            gap: 2px;
+
+            margin-bottom: 2px;
+        }
+
+        .arp-piano-label-spacer,
+        .arp-piano-label {
+            flex: 0 0 40px;
+        }
+
+        .arp-piano-label {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 6px;
+
+            color: #888;
+
+            font-size: 8px;
+        }
+
+        .arp-step-headers,
+        .arp-piano-cells {
+            display: flex;
+            flex: 1;
+            gap: 2px;
+        }
+
+        .arp-step-header,
+        .arp-piano-cell {
+            flex: 1;
+            min-width: 20px;
+
+            border: 1px solid #222;
+            border-radius: 0;
+
+            background: #000;
+        }
+
+        .arp-step-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            height: 22px;
+
+            color: #888;
+
+            font-size: 9px;
+        }
+
+        .arp-step-header.current {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .arp-piano-cell {
+            height: 13px;
+
+            cursor: pointer;
+        }
+
+        .arp-piano-cell.active {
+            background: #888;
+        }
+
+        .arp-piano-cell.current {
+            border-color: #666;
+        }
+
+        .arp-piano-cell.active.current {
+            background: #fff;
+        }
+
+        .arp-piano-roll {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+
+            /* the 25 rows' natural height (25 * 13px + gaps =~ 349px)
+               fits without scrolling now that the modules row below is
+               spread across more, shorter columns instead of two tall
+               ones -- overflow-y stays as a safety net, not a deliberate
+               cap, in case a future addition grows this again */
+            max-height: 360px;
+            margin-bottom: 18px;
+
+            overflow-y: auto;
+        }
+
+        /* only 2 modules here (Pattern, Output), not Synth's 6 -- same
+           auto-fit treatment #bass-view .modules already uses, for the
+           same reason */
+        #arp-view .modules {
+            grid-template-columns:
+                repeat(auto-fit, minmax(140px, 1fr));
+        }
+
         /* --- mixer --------------------------------------------------------
            DJ-mixer channel-strip logic, top to bottom: High, Mid, Low,
            Pan, VU meter + fader, Mute/Solo at the very bottom. No boxed
@@ -902,6 +1059,63 @@
             font-weight: 400;
             letter-spacing: 0.1em;
             text-transform: uppercase;
+        }
+
+        /* Beat FX shares Master's own column -- same width/border/padding
+           as any other .mixer-strip, just carried by this wrapper instead
+           of by masterStrip itself, so the two stack in one column rather
+           than each claiming their own */
+        .mixer-master-column {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            flex: 1 1 130px;
+
+            padding: 0 16px;
+
+            border-left: 1px solid #333;
+        }
+
+        .mixer-master-column .mixer-strip {
+            flex: none;
+
+            padding: 0;
+
+            border-left: none;
+        }
+
+        .mixer-beatfx {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+
+            /* the ruler separating it from Master, stacked directly
+               above it in the same column */
+            padding-top: 14px;
+            border-top: 1px solid #333;
+        }
+
+        .mixer-beatfx h2 {
+            margin: 0 0 6px;
+
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .mixer-beatfx .field {
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .mixer-beatfx select {
+            width: 100%;
+            padding: 4px 6px;
+
+            font-size: 10px;
         }
 
         /* small knob variant for High/Mid/Low/Pan, stacked vertically --
@@ -1011,11 +1225,11 @@
             justify-content: center;
 
             width: 40px;
-            height: 120px;
+            height: 90px;
         }
 
         .fader-input {
-            width: 110px;
+            width: 84px;
             height: 20px;
             margin: 0;
 
@@ -1029,6 +1243,31 @@
             color: #fff;
 
             font-size: 11px;
+        }
+
+        /* --- Beat FX on/off -- same muted-then-lit convention as
+           .mixer-mute/.mixer-solo above, just its own color so it
+           doesn't read as either of those */
+
+        .beatfx-toggle {
+            padding: 6px 14px;
+
+            border: 1px solid #fff;
+            border-radius: 0;
+
+            background: #000;
+            color: #888;
+
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+
+            cursor: pointer;
+        }
+
+        .beatfx-toggle.active {
+            background: #3d6d94;
+            color: #000;
         }
 
         /* --- VU meter -- a digital segmented level bar, Pioneer-style --- */
@@ -1046,7 +1285,7 @@
         }
 
         .mixer-master-meter .vu-meter {
-            height: 120px;
+            height: 80px;
         }
 
         .vu-segment {
@@ -1129,6 +1368,7 @@
                 <button type="button" class="engine-tab active" data-view="synth" role="tab" aria-selected="true">Synth</button>
                 <button type="button" class="engine-tab" data-view="drums" role="tab" aria-selected="false">Drums</button>
                 <button type="button" class="engine-tab" data-view="bass" role="tab" aria-selected="false">Bass</button>
+                <button type="button" class="engine-tab" data-view="arp" role="tab" aria-selected="false">Arp</button>
 
                 <button
                     type="button"
@@ -1921,26 +2161,28 @@
                 Loading samples…
             </div>
 
-            <div class="drum-master">
-                <div class="knob-control" data-knob data-input="drum-master-volume" data-output="drum-master-volume-value">
-                    <div class="knob">
-                        <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
-                            <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
-                            <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
-                        </svg>
+            <div class="drum-sequencer-row">
+                <div class="drum-sequencer" id="drum-sequencer"></div>
 
-                        <div class="indicator"></div>
-                        <div class="knob-center"></div>
+                <div class="drum-master-column">
+                    <div class="knob-control" data-knob data-input="drum-master-volume" data-output="drum-master-volume-value">
+                        <div class="knob">
+                            <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                                <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                                <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            </svg>
 
-                        <input id="drum-master-volume" type="range" min="0" max="1" step="0.01" value="0.5">
+                            <div class="indicator"></div>
+                            <div class="knob-center"></div>
+
+                            <input id="drum-master-volume" type="range" min="0" max="1" step="0.01" value="0.5">
+                        </div>
+
+                        <div class="knob-name">Master</div>
+                        <output id="drum-master-volume-value" class="knob-value">0.50</output>
                     </div>
-
-                    <div class="knob-name">Master</div>
-                    <output id="drum-master-volume-value" class="knob-value">0.50</output>
                 </div>
             </div>
-
-            <div class="drum-sequencer" id="drum-sequencer"></div>
         </div>
 
         <div id="bass-view" class="view" hidden>
@@ -2114,8 +2356,181 @@
             </div>
         </div>
 
+        <div id="arp-view" class="view" hidden>
+            <div class="arp-editor">
+                <div class="arp-step-row">
+                    <div class="arp-piano-label-spacer"></div>
+                    <div class="arp-step-headers" id="arp-step-headers"></div>
+                </div>
+
+                <div class="arp-piano-roll" id="arp-piano-roll"></div>
+            </div>
+
+            <div class="modules">
+                <section class="module">
+                    <h2>Mode</h2>
+
+                    <div class="field">
+                        <label class="field-label" for="arp-mode">Mode</label>
+
+                        <select id="arp-mode">
+                            <option value="0">Up</option>
+                            <option value="1">Down</option>
+                            <option value="2">Up/Down</option>
+                            <option value="3">Random</option>
+                        </select>
+                    </div>
+                </section>
+
+                <section class="module">
+                    <h2>Note Rate</h2>
+
+                    <div class="field">
+                        <label class="field-label" for="arp-division">Note Rate</label>
+
+                        <select id="arp-division">
+                            <option value="0">1/4</option>
+                            <option value="1" selected>1/8</option>
+                            <option value="2">1/16</option>
+                            <option value="3">1/32</option>
+                        </select>
+                    </div>
+                </section>
+
+                <section class="module">
+                    <h2>Chord Rate</h2>
+
+                    <div class="field">
+                        <label class="field-label" for="arp-chord-division">Chord Rate</label>
+
+                        <select id="arp-chord-division">
+                            <option value="0" selected>1/4 (fills a bar)</option>
+                            <option value="1">1/8 (2x per bar)</option>
+                            <option value="2">1/16 (4x per bar)</option>
+                            <option value="3">1/32 (8x per bar)</option>
+                        </select>
+                    </div>
+                </section>
+
+                <section class="module">
+                    <h2>Octaves</h2>
+
+                    <div class="knob-control" data-knob data-input="arp-octave-range" data-output="arp-octave-range-value">
+                        <div class="knob">
+                            <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                                <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                                <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            </svg>
+
+                            <div class="indicator"></div>
+                            <div class="knob-center"></div>
+
+                            <input id="arp-octave-range" type="range" min="1" max="4" step="1" value="1">
+                        </div>
+
+                        <div class="knob-name">Octaves</div>
+                        <output id="arp-octave-range-value" class="knob-value">1</output>
+                    </div>
+                </section>
+
+                <section class="module">
+                    <h2>Waveform</h2>
+
+                    <div class="field">
+                        <label class="field-label" for="arp-waveform">Waveform</label>
+
+                        <select id="arp-waveform">
+                            <option value="0">Sine</option>
+                            <option value="1">Square</option>
+                            <option value="2">Saw</option>
+                            <option value="3">Triangle</option>
+                        </select>
+                    </div>
+                </section>
+
+                <section class="module">
+                    <h2>Output</h2>
+
+                    <div class="knob-control" data-knob data-input="arp-master-volume" data-output="arp-master-volume-value">
+                        <div class="knob">
+                            <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                                <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                                <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            </svg>
+
+                            <div class="indicator"></div>
+                            <div class="knob-center"></div>
+
+                            <input id="arp-master-volume" type="range" min="0" max="1" step="0.01" value="0.5">
+                        </div>
+
+                        <div class="knob-name">Master</div>
+                        <output id="arp-master-volume-value" class="knob-value">0.50</output>
+                    </div>
+                </section>
+            </div>
+        </div>
+
         <div id="mixer-view" class="view" hidden>
             <div class="mixer-strips" id="mixer-strips"></div>
+
+            <!-- moved into Master's own column (see mixerStripsEl-building
+                 JS below) at init time -- lives here in markup only so its
+                 ids exist before that script runs -->
+            <section id="beatfx-panel" class="mixer-beatfx">
+                <h2>Beat FX</h2>
+
+                <div class="field">
+                    <label class="field-label" for="beatfx-effect">Effect</label>
+
+                    <select id="beatfx-effect">
+                        <option value="0">Delay</option>
+                        <option value="1">Reverb</option>
+                        <option value="2">Flanger</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="beatfx-channel">Channel</label>
+
+                    <!-- options built in JS from MIXER_CHANNELS, so this
+                         can never fall out of sync with the mixer strips
+                         above -->
+                    <select id="beatfx-channel"></select>
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="beatfx-rate">Rate</label>
+
+                    <select id="beatfx-rate">
+                        <option value="0">1/4</option>
+                        <option value="1" selected>1/8</option>
+                        <option value="2">1/16</option>
+                        <option value="3">1/32</option>
+                    </select>
+                </div>
+
+                <div class="mixer-knob">
+                <div class="knob-control" data-knob data-input="beatfx-dry-wet" data-output="beatfx-dry-wet-value">
+                    <div class="knob">
+                        <svg class="knob-arc" viewBox="0 0 76 66" aria-hidden="true">
+                            <circle class="knob-track" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                            <circle class="knob-value-arc" cx="38" cy="38" r="25" pathLength="270" stroke-dasharray="270 90"></circle>
+                        </svg>
+
+                        <div class="indicator"></div>
+                        <div class="knob-center"></div>
+
+                        <input id="beatfx-dry-wet" type="range" min="0" max="1" step="0.01" value="0.5">
+                    </div>
+
+                    <div class="knob-name">Dry/Wet</div>
+                    <output id="beatfx-dry-wet-value" class="knob-value">0.50</output>
+                </div>
+                </div>
+
+                <button type="button" id="beatfx-toggle" class="beatfx-toggle">Off</button>
+            </section>
         </div>
 
         <nav class="site-nav">
@@ -2313,7 +2728,8 @@
             format,
             messageType,
             transform = value => value,
-            extraPayload = {}
+            extraPayload = {},
+            onChange = () => {}
         }) {
             const input =
                 document.getElementById(inputId);
@@ -2375,6 +2791,8 @@
                     transform(clamped),
                     extraPayload
                 );
+
+                onChange(clamped);
             }
 
             knob.addEventListener(
@@ -3300,20 +3718,208 @@
         // initial waveform push, matching bindSelect's own pattern above
         sendBass("set-acid-waveform", { value: Number(document.getElementById("bass-waveform").value) });
 
+        // --- Arp (Arp tab) -----------------------------------------------------
+        //
+        // Rides the same shared Transport as drums/bass, but at a much
+        // coarser grain -- 4 chord slots, one per beat of a 4/4 bar,
+        // not one slot per raw 16th-note step (see Arp::chord_index_for_step
+        // in arp/arp.rs for the raw-step-to-slot mapping). Each slot
+        // holds a whole chord (built in the piano roll below), not one
+        // note like bass's steps -- no separate active/inactive toggle:
+        // a slot with notes drawn into it swaps the arp's
+        // currently-arpeggiated chord to its own, an empty slot changes
+        // nothing, so whatever chord was last held just keeps
+        // arpeggiating until a slot with notes comes along. The Chord
+        // Rate select below (set-arp-chord-division) controls how many
+        // raw steps each slot spans before advancing to the next.
+        const ARP_CHORD_COUNT = 4;
+
+        // both let, not const -- rebuildArpPianoRoll recomputes these
+        // from the Octaves knob, so the piano roll's own visible range
+        // tracks the same octave count the knob already sends to the
+        // engine for playback, instead of the two being unrelated
+        let ARP_MIN_SEMITONE = 0;
+        let ARP_MAX_SEMITONE = 0;
+
+        // arpSteps[i] = Set of semitone offsets currently on for that
+        // chord slot -- reuses noteFrequency/noteName from the bass
+        // section above, same root note and note-naming convention
+        const arpSteps = Array.from({ length: ARP_CHORD_COUNT }, () => new Set());
+
+        function sendArp(type, payload = {}) {
+            sessionNode.port.postMessage({ type, ...payload });
+        }
+
+        function pushArpStep(index) {
+            sendArp("set-arp-step", {
+                index,
+                notes: Array.from(arpSteps[index]).map(semitone => noteFrequency(semitone))
+            });
+        }
+
+        // takes the arp's *chord index* (0..3, from the "step" message's
+        // arpChord field -- see session-worklet.js), not the shared
+        // Transport's raw step, since the grid below only has
+        // ARP_CHORD_COUNT columns now
+        function highlightArpStep(currentChord) {
+            document.querySelectorAll(".arp-step-header").forEach(header => {
+                header.classList.toggle("current", Number(header.dataset.step) === currentChord);
+            });
+
+            document.querySelectorAll(".arp-piano-cell").forEach(cell => {
+                cell.classList.toggle("current", Number(cell.dataset.step) === currentChord);
+            });
+        }
+
+        const arpStepHeadersEl = document.getElementById("arp-step-headers");
+        const arpPianoRollEl = document.getElementById("arp-piano-roll");
+
+        // plain labels, not buttons -- no active/inactive toggle to
+        // click anymore, these just align with the piano roll's columns
+        // and light up via highlightArpStep as the playhead passes
+        for (let step = 0; step < ARP_CHORD_COUNT; step++) {
+            const header = document.createElement("div");
+            header.className = "arp-step-header";
+            header.textContent = String(step + 1);
+            header.dataset.step = step;
+
+            arpStepHeadersEl.appendChild(header);
+        }
+
+        // (re)builds the piano roll for a given octave count -- symmetric
+        // around the root the same way the old fixed -12..12 range was,
+        // just scaled by octaves instead of hardcoded to 2 (octaves=2
+        // reproduces that exact original range). Any already-drawn notes
+        // that fall outside the new (possibly narrower) range are
+        // dropped from the model too, not just hidden -- keeping what's
+        // visible and what's actually sent to the engine in sync, rather
+        // than leaving silently-still-playing notes with no way to see
+        // or clear them.
+        function rebuildArpPianoRoll(octaves) {
+            ARP_MIN_SEMITONE = -(octaves * 6);
+            ARP_MAX_SEMITONE = octaves * 6;
+
+            arpSteps.forEach((notes, step) => {
+                let changed = false;
+
+                for (const semitone of notes) {
+                    if (semitone < ARP_MIN_SEMITONE || semitone > ARP_MAX_SEMITONE) {
+                        notes.delete(semitone);
+                        changed = true;
+                    }
+                }
+
+                if (changed) {
+                    pushArpStep(step);
+                }
+            });
+
+            arpPianoRollEl.innerHTML = "";
+
+            // high to low, top to bottom -- standard piano-roll orientation
+            for (let semitone = ARP_MAX_SEMITONE; semitone >= ARP_MIN_SEMITONE; semitone--) {
+                const row = document.createElement("div");
+                row.className = "arp-piano-row";
+
+                const label = document.createElement("div");
+                label.className = "arp-piano-label";
+                label.textContent = noteName(semitone);
+                row.appendChild(label);
+
+                const cells = document.createElement("div");
+                cells.className = "arp-piano-cells";
+
+                for (let step = 0; step < ARP_CHORD_COUNT; step++) {
+                    const cell = document.createElement("button");
+                    cell.type = "button";
+                    cell.className = "arp-piano-cell";
+                    cell.dataset.step = step;
+                    cell.dataset.semitone = semitone;
+                    cell.title = `${noteName(semitone)} — beat ${step + 1}`;
+                    cell.classList.toggle("active", arpSteps[step].has(semitone));
+
+                    cell.addEventListener("click", () => {
+                        const notes = arpSteps[step];
+
+                        if (notes.has(semitone)) {
+                            notes.delete(semitone);
+                        } else {
+                            notes.add(semitone);
+                        }
+
+                        cell.classList.toggle("active", notes.has(semitone));
+                        pushArpStep(step);
+                    });
+
+                    cells.appendChild(cell);
+                }
+
+                row.appendChild(cells);
+                arpPianoRollEl.appendChild(row);
+            }
+        }
+
+        // initializeKnob's own setup below fires onChange once immediately,
+        // which builds the piano roll for the first time -- see the
+        // arp-octave-range initializeKnob call further down
+
+        document.getElementById("arp-mode").addEventListener("change", event => {
+            sendArp("set-arp-mode", { value: Number(event.target.value) });
+            event.target.blur();
+        });
+
+        document.getElementById("arp-division").addEventListener("change", event => {
+            sendArp("set-arp-division", { value: Number(event.target.value) });
+            event.target.blur();
+        });
+
+        document.getElementById("arp-chord-division").addEventListener("change", event => {
+            sendArp("set-arp-chord-division", { value: Number(event.target.value) });
+            event.target.blur();
+        });
+
+        document.getElementById("arp-waveform").addEventListener("change", event => {
+            sendArp("set-arp-waveform", { value: Number(event.target.value) });
+            event.target.blur();
+        });
+
+        initializeKnob({
+            inputId: "arp-octave-range",
+            outputId: "arp-octave-range-value",
+            format: value => String(Math.round(value)),
+            messageType: "set-arp-octave-range",
+            onChange: value => rebuildArpPianoRoll(Math.round(value))
+        });
+
+        initializeKnob({
+            inputId: "arp-master-volume",
+            outputId: "arp-master-volume-value",
+            format: value => value.toFixed(2),
+            messageType: "set-arp-master-volume"
+        });
+
+        // initial pushes, matching bindSelect's own pattern above
+        sendArp("set-arp-mode", { value: Number(document.getElementById("arp-mode").value) });
+        sendArp("set-arp-division", { value: Number(document.getElementById("arp-division").value) });
+        sendArp("set-arp-chord-division", { value: Number(document.getElementById("arp-chord-division").value) });
+        sendArp("set-arp-waveform", { value: Number(document.getElementById("arp-waveform").value) });
+
         // --- Mixer (Mixer tab) -----------------------------------------------
         //
         // DJ-mixer channel-strip logic, top to bottom: High, Mid, Low,
         // Pan, a VU meter beside the fader, then Mute/Solo at the very
         // bottom -- plus a Master panel with its own VU meter and volume
         // knob. `index` mirrors Session's own DRUM_CHANNEL/ACID_CHANNEL/
-        // SYNTH_CHANNEL constants (also exported from wasm as
-        // drum_channel()/acid_channel()/synth_channel()); display order
-        // (Synth, Drums, Bass) is independent of that index order.
+        // SYNTH_CHANNEL/ARP_CHANNEL constants (also exported from wasm as
+        // drum_channel()/acid_channel()/synth_channel()/arp_channel());
+        // display order (Synth, Drums, Bass, Arp) is independent of that
+        // index order.
 
         const MIXER_CHANNELS = [
             { key: "synth", index: 2, label: "Synth" },
             { key: "drum", index: 0, label: "Drums" },
-            { key: "bass", index: 1, label: "Bass" }
+            { key: "bass", index: 1, label: "Bass" },
+            { key: "arp", index: 3, label: "Arp" }
         ];
 
         const mixerStripsEl = document.getElementById("mixer-strips");
@@ -3584,12 +4190,23 @@
         masterMeterRow.append(leftMeter.wrapper, rightMeter.wrapper);
         masterStrip.appendChild(masterMeterRow);
 
-        masterStrip.appendChild(buildKnobMarkup({
+        const masterVolumeWrapper = document.createElement("div");
+        masterVolumeWrapper.className = "mixer-knob";
+        masterVolumeWrapper.appendChild(buildKnobMarkup({
             inputId: "mixer-master-volume", outputId: "mixer-master-volume-value", name: "Volume",
             min: 0, max: 1, step: 0.01, value: 1
         }));
+        masterStrip.appendChild(masterVolumeWrapper);
 
-        mixerStripsEl.appendChild(masterStrip);
+        // Beat FX lives in Master's own column, stacked below it -- moves
+        // the static #beatfx-panel markup (its ids need to already exist
+        // for the wiring further down) into place here rather than
+        // appending masterStrip on its own
+        const masterColumn = document.createElement("div");
+        masterColumn.className = "mixer-master-column";
+        masterColumn.append(masterStrip, document.getElementById("beatfx-panel"));
+
+        mixerStripsEl.appendChild(masterColumn);
 
         initializeKnob({
             inputId: "mixer-master-volume",
@@ -3597,6 +4214,70 @@
             format: value => value.toFixed(2),
             messageType: "set-mixer-master-volume"
         });
+
+        // --- Beat FX -----------------------------------------------------------
+        //
+        // One shared effect send for the whole mixer, Pioneer DJM-style --
+        // exactly one of Delay/Reverb/Flanger reaches the output at a
+        // time (beatfx-effect), routed onto whichever channel
+        // beatfx-channel names, at a rate synced to the same shared BPM
+        // as everything else (beatfx-rate).
+
+        function sendBeatFx(type, payload = {}) {
+            sessionNode.port.postMessage({ type, ...payload });
+        }
+
+        const beatFxChannelEl = document.getElementById("beatfx-channel");
+
+        // reuses MIXER_CHANNELS (already built above) as the single
+        // source of truth for channel index -> label, so this select
+        // can never fall out of sync with the mixer strips themselves
+        MIXER_CHANNELS.forEach(channel => {
+            const option = document.createElement("option");
+            option.value = channel.index;
+            option.textContent = channel.label;
+
+            beatFxChannelEl.appendChild(option);
+        });
+
+        document.getElementById("beatfx-effect").addEventListener("change", event => {
+            sendBeatFx("set-beat-fx-active", { value: Number(event.target.value) });
+            event.target.blur();
+        });
+
+        beatFxChannelEl.addEventListener("change", event => {
+            sendBeatFx("set-beat-fx-channel", { value: Number(event.target.value) });
+            event.target.blur();
+        });
+
+        document.getElementById("beatfx-rate").addEventListener("change", event => {
+            sendBeatFx("set-beat-fx-division", { value: Number(event.target.value) });
+            event.target.blur();
+        });
+
+        initializeKnob({
+            inputId: "beatfx-dry-wet",
+            outputId: "beatfx-dry-wet-value",
+            format: value => value.toFixed(2),
+            messageType: "set-beat-fx-dry-wet"
+        });
+
+        const beatFxToggleEl = document.getElementById("beatfx-toggle");
+        let beatFxEnabled = false;
+
+        beatFxToggleEl.addEventListener("click", () => {
+            beatFxEnabled = !beatFxEnabled;
+
+            beatFxToggleEl.classList.toggle("active", beatFxEnabled);
+            beatFxToggleEl.textContent = beatFxEnabled ? "On" : "Off";
+
+            sendBeatFx("set-beat-fx-enabled", { value: beatFxEnabled });
+        });
+
+        // initial pushes, matching bindSelect's own pattern above
+        sendBeatFx("set-beat-fx-active", { value: Number(document.getElementById("beatfx-effect").value) });
+        sendBeatFx("set-beat-fx-channel", { value: Number(beatFxChannelEl.value) });
+        sendBeatFx("set-beat-fx-division", { value: Number(document.getElementById("beatfx-rate").value) });
 
         // --- Transport (global) + step/status listener -----------------------
         //
@@ -3614,6 +4295,7 @@
             if (message.type === "step") {
                 highlightDrumStep(message.step);
                 highlightBassStep(message.step);
+                highlightArpStep(message.arpChord);
                 return;
             }
 
@@ -3668,7 +4350,7 @@
         // connected and processing regardless, so switching tabs never
         // interrupts anything
 
-        const VIEWS = ["synth", "drums", "bass", "mixer"];
+        const VIEWS = ["synth", "drums", "bass", "arp", "mixer"];
         const viewElements = Object.fromEntries(
             VIEWS.map(view => [view, document.getElementById(`${view}-view`)])
         );
@@ -3678,6 +4360,7 @@
             synth: "VS-2: Subtractive Synth",
             drums: "VS-909: Rhythm Composer",
             bass: "VS-303: Bassline Sequencer",
+            arp: "VS-16: Step Arpeggiator",
             mixer: "VSM-900: Multi-Channel Mixer"
         };
 

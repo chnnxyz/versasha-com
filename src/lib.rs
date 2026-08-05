@@ -1,4 +1,5 @@
 pub mod acid_bass;
+pub mod arp;
 pub mod drums;
 pub mod dsp;
 pub mod engine;

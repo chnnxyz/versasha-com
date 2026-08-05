@@ -34,7 +34,12 @@ The audio callback runs on a real-time thread and cannot glitch, so:
 
 - **Never panic in code that runs per-sample.** Indices that come from
   outside Rust (a JS-supplied track/step index, for example) are validated
-  with `Option`/bounds checks, never indexed directly.
+  with `Option`/bounds checks, never indexed directly. This also covers
+  indices your own code computes with floating-point math (a swept delay
+  read position, say) — `rem_euclid`/similar are only guaranteed in-range
+  *mathematically*; rounding can still land exactly on one past the last
+  valid index. Clamp the final integer index, not just the float leading
+  up to it.
 - **No allocation in the audio callback.** `next_sample()`/`process()` paths
   should not `Vec::push`, `format!`, or otherwise allocate.
 - **"Always advance, decide at output."** When something is muted, soloed
@@ -47,7 +52,13 @@ The audio callback runs on a real-time thread and cannot glitch, so:
   expected) inside `#[cfg(test)] mod tests` blocks; everywhere else, prefer
   the absolute path.
 - **No dead code.** No unused fields, no unused imports, no commented-out
-  blocks left "just in case."
+  blocks left "just in case." Before removing something because it looks
+  unused from `index.html`/`SessionEngine`, check whether it's still
+  reachable from one of the *other* wasm bindings in `wasm.rs`
+  (`SynthEngine`/`DrumMachineEngine`/`AcidSynthEngine`) and their standalone
+  pages (`drums.html`, `acid.html`) — several core types are shared across
+  more than one binding, so "unused by the unified page" isn't the same as
+  "unused."
 
 ## Tests
 

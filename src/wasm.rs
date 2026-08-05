@@ -1,15 +1,18 @@
 use wasm_bindgen::prelude::*;
 
 use crate::acid_bass::acid_step::AcidStep;
+use crate::arp::pattern::ArpMode;
 use crate::dsp::filters::FilterType;
 use crate::dsp::fx::FxRoute;
 use crate::dsp::oscillators::waveform::Waveform;
 use crate::drums::sample_track::SampleTrackStatus;
 use crate::engine::acid_synth::AcidSynth;
 use crate::engine::drum_machine::DrumMachine;
-use crate::engine::session::{Session, ACID_CHANNEL, DRUM_CHANNEL, SYNTH_CHANNEL};
+use crate::engine::session::{Session, ACID_CHANNEL, ARP_CHANNEL, DRUM_CHANNEL, SYNTH_CHANNEL};
 use crate::engine::synth::Synth;
+use crate::mixer::effects_unit::EffectType;
 use crate::mixer::instrument_channel::InstrumentChannelStatus;
+use crate::sequencing::note_division::NoteDivision;
 use crate::sequencing::transport::SequencerStatus;
 
 #[wasm_bindgen]
@@ -471,7 +474,12 @@ pub fn synth_channel() -> usize {
     SYNTH_CHANNEL
 }
 
-// The unified engine for the merged synth+drums+bass+mixer page --
+#[wasm_bindgen]
+pub fn arp_channel() -> usize {
+    ARP_CHANNEL
+}
+
+// The unified engine for the merged synth+drums+bass+arp+mixer page --
 // wraps Session, replacing SynthEngine/DrumMachineEngine/AcidSynthEngine
 // above (each still kept around for their own standalone pages). Reaches
 // instrument-specific knobs through Session's drum_machine_mut()/
@@ -836,6 +844,132 @@ impl SessionEngine {
         self.session.acid_synth().master_volume()
     }
 
+    // --- arp ---------------------------------------------------------------
+    //
+    // Each of arp_step_count() steps holds a whole chord (not one note
+    // like Bass's steps) -- a step with notes is what plays, an empty
+    // step is a no-op (see Arp::trigger_step), no separate active flag.
+
+    pub fn set_arp_step(&mut self, index: usize, notes: Vec<f32>) {
+        self.session.set_arp_step(index, notes);
+    }
+
+    pub fn arp_step_count(&self) -> usize {
+        self.session.arp().step_count()
+    }
+
+    pub fn arp_step_notes(&self, index: usize) -> Vec<f32> {
+        self.session
+            .arp()
+            .step(index)
+            .map(|step| step.notes().to_vec())
+            .unwrap_or_default()
+    }
+
+    pub fn set_arp_mode(&mut self, mode: u32) {
+        self.session.arp_mut().pattern_mut().set_mode(match mode {
+            0 => ArpMode::Up,
+            1 => ArpMode::Down,
+            2 => ArpMode::UpDown,
+            3 => ArpMode::Random,
+            _ => ArpMode::Up,
+        });
+    }
+
+    pub fn arp_mode(&mut self) -> u32 {
+        match self.session.arp_mut().pattern_mut().mode() {
+            ArpMode::Up => 0,
+            ArpMode::Down => 1,
+            ArpMode::UpDown => 2,
+            ArpMode::Random => 3,
+        }
+    }
+
+    pub fn set_arp_octave_range(&mut self, octaves: u32) {
+        self.session
+            .arp_mut()
+            .pattern_mut()
+            .set_octave_range(octaves as u8);
+    }
+
+    pub fn arp_octave_range(&mut self) -> u32 {
+        self.session.arp_mut().pattern_mut().octave_range() as u32
+    }
+
+    pub fn set_arp_division(&mut self, division: u32) {
+        self.session.arp_mut().set_division(match division {
+            0 => NoteDivision::Quarter,
+            1 => NoteDivision::Eighth,
+            2 => NoteDivision::Sixteenth,
+            3 => NoteDivision::ThirtySecond,
+            _ => NoteDivision::Quarter,
+        });
+    }
+
+    pub fn arp_division(&self) -> u32 {
+        match self.session.arp().division() {
+            NoteDivision::Quarter => 0,
+            NoteDivision::Eighth => 1,
+            NoteDivision::Sixteenth => 2,
+            NoteDivision::ThirtySecond => 3,
+        }
+    }
+
+    // how long each of the 4 chord slots holds before advancing to the
+    // next -- separate from arp_division above, which governs how fast
+    // notes cycle *within* whichever chord is currently held
+    pub fn set_arp_chord_division(&mut self, division: u32) {
+        self.session.arp_mut().set_chord_division(match division {
+            0 => NoteDivision::Quarter,
+            1 => NoteDivision::Eighth,
+            2 => NoteDivision::Sixteenth,
+            3 => NoteDivision::ThirtySecond,
+            _ => NoteDivision::Quarter,
+        });
+    }
+
+    pub fn arp_chord_division(&self) -> u32 {
+        match self.session.arp().chord_division() {
+            NoteDivision::Quarter => 0,
+            NoteDivision::Eighth => 1,
+            NoteDivision::Sixteenth => 2,
+            NoteDivision::ThirtySecond => 3,
+        }
+    }
+
+    // lets the UI highlight the right chord slot as the shared playhead
+    // moves, without duplicating Arp::chord_index_for_step's math in JS
+    pub fn arp_chord_index_for_step(&self, step: usize) -> usize {
+        self.session.arp().chord_index_for_step(step)
+    }
+
+    pub fn set_arp_master_volume(&mut self, volume: f32) {
+        self.session.arp_mut().set_master_volume(volume);
+    }
+
+    pub fn arp_master_volume(&self) -> f32 {
+        self.session.arp().master_volume()
+    }
+
+    pub fn set_arp_waveform(&mut self, waveform: u32) {
+        self.session.arp_mut().set_waveform(match waveform {
+            0 => Waveform::Sine,
+            1 => Waveform::Square,
+            2 => Waveform::Saw,
+            3 => Waveform::Triangle,
+            _ => Waveform::Sine,
+        });
+    }
+
+    pub fn arp_waveform(&self) -> u32 {
+        match self.session.arp().waveform() {
+            Waveform::Sine => 0,
+            Waveform::Square => 1,
+            Waveform::Saw => 2,
+            Waveform::Triangle => 3,
+        }
+    }
+
     // --- mixer -----------------------------------------------------------
     //
     // `channel` is one of drum_channel()/acid_channel()/synth_channel()
@@ -955,5 +1089,78 @@ impl SessionEngine {
 
     pub fn master_peak_right(&self) -> f32 {
         self.session.mixer().master_peak_right()
+    }
+
+    // --- Beat FX -----------------------------------------------------------
+    //
+    // One shared effect send for the whole mixer (Pioneer DJM-style) --
+    // exactly one of Delay/Reverb/Flanger reaches the output at a time,
+    // routed onto whichever mixer channel `channel` names (drum_channel()/
+    // acid_channel()/synth_channel()/arp_channel() above).
+
+    pub fn set_beat_fx_active(&mut self, effect: u32) {
+        self.session
+            .mixer_mut()
+            .effects_unit_mut()
+            .set_active(match effect {
+                0 => EffectType::Delay,
+                1 => EffectType::Reverb,
+                2 => EffectType::Flanger,
+                _ => EffectType::Delay,
+            });
+    }
+
+    pub fn beat_fx_active(&self) -> u32 {
+        match self.session.mixer().effects_unit().active() {
+            EffectType::Delay => 0,
+            EffectType::Reverb => 1,
+            EffectType::Flanger => 2,
+        }
+    }
+
+    pub fn set_beat_fx_enabled(&mut self, enabled: bool) {
+        self.session.mixer_mut().effects_unit_mut().set_enabled(enabled);
+    }
+
+    pub fn beat_fx_enabled(&self) -> bool {
+        self.session.mixer().effects_unit().enabled()
+    }
+
+    pub fn set_beat_fx_division(&mut self, division: u32) {
+        self.session
+            .mixer_mut()
+            .effects_unit_mut()
+            .set_division(match division {
+                0 => NoteDivision::Quarter,
+                1 => NoteDivision::Eighth,
+                2 => NoteDivision::Sixteenth,
+                3 => NoteDivision::ThirtySecond,
+                _ => NoteDivision::Quarter,
+            });
+    }
+
+    pub fn beat_fx_division(&self) -> u32 {
+        match self.session.mixer().effects_unit().division() {
+            NoteDivision::Quarter => 0,
+            NoteDivision::Eighth => 1,
+            NoteDivision::Sixteenth => 2,
+            NoteDivision::ThirtySecond => 3,
+        }
+    }
+
+    pub fn set_beat_fx_dry_wet(&mut self, dry_wet: f32) {
+        self.session.mixer_mut().effects_unit_mut().set_dry_wet(dry_wet);
+    }
+
+    pub fn beat_fx_dry_wet(&self) -> f32 {
+        self.session.mixer().effects_unit().dry_wet()
+    }
+
+    pub fn set_beat_fx_channel(&mut self, channel: usize) {
+        self.session.mixer_mut().effects_unit_mut().set_channel(channel);
+    }
+
+    pub fn beat_fx_channel(&self) -> usize {
+        self.session.mixer().effects_unit().channel()
     }
 }

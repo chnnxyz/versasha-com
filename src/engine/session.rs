@@ -1,4 +1,5 @@
 use crate::acid_bass::acid_step::AcidStep;
+use crate::arp::arp::Arp;
 use crate::dsp::types::{Frequency, Sample, SampleRate};
 use crate::engine::acid_synth::AcidSynth;
 use crate::engine::drum_machine::DrumMachine;
@@ -13,7 +14,8 @@ use crate::sequencing::transport::{SequencerStatus, Transport};
 pub(crate) const DRUM_CHANNEL: usize = 0;
 pub(crate) const ACID_CHANNEL: usize = 1;
 pub(crate) const SYNTH_CHANNEL: usize = 2;
-const CHANNEL_COUNT: usize = 3;
+pub(crate) const ARP_CHANNEL: usize = 3;
+const CHANNEL_COUNT: usize = 4;
 
 // The top-level orchestrator for the unified page: one shared Transport
 // driving DrumMachine and AcidSynth together, Synth playing live on top
@@ -38,6 +40,7 @@ pub struct Session {
     drum_machine: DrumMachine,
     acid_synth: AcidSynth,
     synth: Synth,
+    arp: Arp,
     mixer: MixerEngine,
 }
 
@@ -79,30 +82,53 @@ impl Session {
             ),
             acid_synth: AcidSynth::new(rate, num_steps, bpm, steps_per_beat),
             synth: Synth::new(rate, voice_count),
+            arp: Arp::new(rate, bpm, num_steps),
             mixer: MixerEngine::new(CHANNEL_COUNT, rate),
         }
     }
 
     // transport controls -- shared across both sequenced instruments;
     // Synth is never touched by any of these, it's always live
+    //
+    // Fires whatever's already programmed on the current step
+    // immediately, rather than waiting for the next natural step
+    // boundary (which is the *next* step, or -- if nothing else is
+    // programmed -- a full pattern wrap all the way back around).
+    // Barely noticeable for Drums/Bass, since another active step
+    // almost always fires within a fraction of a second regardless;
+    // very noticeable for Arp if only the current step has a chord on
+    // it, since without this "press Play" would otherwise mean total
+    // silence until the whole 16-step pattern wraps around once.
     pub fn play(&mut self) {
         self.transport.play();
+        self.arp.play();
+        self.trigger_current_step();
     }
 
     pub fn pause(&mut self) {
         self.transport.pause();
+        self.arp.pause();
     }
 
     pub fn stop(&mut self) {
         self.transport.stop();
+        self.arp.stop();
     }
 
     pub fn bpm(&self) -> f32 {
         self.transport.bpm()
     }
 
+    // Arp isn't sequenced by the shared Transport the way Drums/Bass
+    // are (see arp.rs -- it runs its own StepClock), and the mixer's
+    // Beat FX send isn't sequenced by anything at all (see
+    // mixer/effects_unit.rs), but both should still track the same
+    // tempo as everything else, so set_bpm pushes to all three rather
+    // than leaving either to drift independently.
     pub fn set_bpm(&mut self, bpm: f32) {
         self.transport.set_bpm(bpm);
+        self.arp.set_bpm(bpm);
+        self.mixer.effects_unit_mut().set_bpm(bpm);
     }
 
     pub fn current_step(&self) -> usize {
@@ -138,6 +164,14 @@ impl Session {
 
     pub fn synth_mut(&mut self) -> &mut Synth {
         &mut self.synth
+    }
+
+    pub fn arp(&self) -> &Arp {
+        &self.arp
+    }
+
+    pub fn arp_mut(&mut self) -> &mut Arp {
+        &mut self.arp
     }
 
     pub fn mixer(&self) -> &MixerEngine {
@@ -178,6 +212,10 @@ impl Session {
         self.acid_synth.set_step(index, step);
     }
 
+    pub fn set_arp_step(&mut self, index: usize, notes: Vec<Frequency>) {
+        self.arp.set_step(index, notes);
+    }
+
     // mixer access -- exposes the channel so callers reach its own
     // mute/solo/volume/eq setters directly, same reasoning as
     // InstrumentChannel::eq_mut not re-exposing Eq3's whole API. Use the
@@ -187,17 +225,27 @@ impl Session {
         self.mixer.channel_mut(index)
     }
 
+    // fans a step index out to every sequenced instrument -- shared by
+    // next_sample()'s own boundary-crossed trigger below and by play()
+    // above, which needs the exact same fan-out for the step the
+    // transport is already sitting on
+    fn trigger_current_step(&mut self) {
+        let step = self.transport.current_step();
+        self.drum_machine.trigger_step(step);
+        self.acid_synth.trigger_step(step);
+        self.arp.trigger_step(step);
+    }
+
     pub fn next_sample(&mut self) -> (Sample, Sample) {
         if self.transport.advance() {
-            let step = self.transport.current_step();
-            self.drum_machine.trigger_step(step);
-            self.acid_synth.trigger_step(step);
+            self.trigger_current_step();
         }
 
         let mut inputs = [0.0; CHANNEL_COUNT];
         inputs[DRUM_CHANNEL] = self.drum_machine.next_sample();
         inputs[ACID_CHANNEL] = self.acid_synth.next_sample();
         inputs[SYNTH_CHANNEL] = self.synth.next_sample();
+        inputs[ARP_CHANNEL] = self.arp.next_sample();
 
         self.mixer.process(&inputs)
     }
@@ -290,6 +338,54 @@ mod tests {
     }
 
     #[test]
+    fn arp_accessors_reach_the_real_arp() {
+        let mut session = test_session();
+
+        session.arp_mut().set_master_volume(0.25);
+
+        assert_eq!(session.arp().master_volume(), 0.25);
+    }
+
+    #[test]
+    fn set_bpm_also_updates_the_arps_tempo() {
+        let mut session = test_session();
+
+        session.set_bpm(140.0);
+
+        assert_eq!(session.arp().bpm(), 140.0);
+    }
+
+    #[test]
+    fn arp_channel_reaches_the_mixer() {
+        let mut session = test_session();
+
+        session.arp_mut().pattern_mut().set_notes(vec![2.0]);
+
+        // arp's own inner clock only ticks while playing (see arp.rs)
+        session.play();
+
+        // isolate the arp channel so this only measures whether it's
+        // actually wired into the mixer sum, not accidentally silent
+        // for some other reason
+        session
+            .mixer_channel_mut(DRUM_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+        session
+            .mixer_channel_mut(ACID_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+        session
+            .mixer_channel_mut(SYNTH_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+
+        let audible = (0..50).any(|_| session.next_sample() != (0.0, 0.0));
+
+        assert!(audible, "expected the arp channel to reach the final mix");
+    }
+
+    #[test]
     fn synth_mut_reaches_the_real_synth() {
         let mut session = test_session();
 
@@ -375,6 +471,131 @@ mod tests {
 
         assert_eq!(session.current_step(), 1);
         assert_ne!(output, (0.0, 0.0));
+    }
+
+    #[test]
+    fn transport_also_triggers_the_arp_on_the_same_step_boundary() {
+        let mut session = test_session();
+
+        // chord slot 1 (of 4) -- at the default chord_division, that's
+        // a boundary every 4 raw steps, so this one lands at raw step 4
+        session.set_arp_step(1, vec![2.0]);
+
+        session.play();
+
+        // samples_per_step is 2.0 at this test's rate/bpm (see
+        // play_pause_stop_transition_current_step_correctly above) --
+        // 8 calls crosses from step 0 to step 4, landing exactly on
+        // slot 1's boundary
+        for _ in 0..8 {
+            session.next_sample();
+        }
+
+        assert_eq!(session.current_step(), 4);
+
+        // isolate the arp channel -- its own inner arpeggiation clock
+        // (separate from the shared Transport) still needs a few more
+        // samples after the chord swap to actually trigger a note, so
+        // this checks audibility across a short window rather than the
+        // exact step-crossing sample
+        session
+            .mixer_channel_mut(DRUM_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+        session
+            .mixer_channel_mut(ACID_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+        session
+            .mixer_channel_mut(SYNTH_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+
+        let audible = (0..50).any(|_| session.next_sample() != (0.0, 0.0));
+
+        assert!(
+            audible,
+            "expected the arp's chord (set on slot 1) to become audible once the shared transport reached its boundary step"
+        );
+    }
+
+    #[test]
+    fn play_immediately_triggers_whatever_is_on_the_current_step() {
+        let mut session = test_session();
+
+        // step 0 is where the transport already sits before any step
+        // boundary is ever crossed -- without play() firing it
+        // directly, this chord wouldn't trigger until the pattern
+        // wrapped all the way back around (a full 16 steps)
+        session.set_arp_step(0, vec![2.0]);
+
+        session
+            .mixer_channel_mut(DRUM_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+        session
+            .mixer_channel_mut(ACID_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+        session
+            .mixer_channel_mut(SYNTH_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+
+        session.play();
+
+        let audible = (0..50).any(|_| session.next_sample() != (0.0, 0.0));
+
+        assert!(
+            audible,
+            "expected play() to trigger step 0's chord immediately, not wait for a full pattern wrap"
+        );
+    }
+
+    #[test]
+    fn stop_actually_silences_the_arp_even_though_its_clock_is_independent() {
+        // Arp's own inner arpeggiation clock is separate from the
+        // shared Transport (see arp.rs), so it doesn't get silenced
+        // just because Transport::advance() stops returning true --
+        // Session::stop() has to reach into Arp explicitly too.
+        let mut session = test_session();
+
+        session.set_arp_step(0, vec![2.0]);
+
+        session
+            .mixer_channel_mut(DRUM_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+        session
+            .mixer_channel_mut(ACID_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+        session
+            .mixer_channel_mut(SYNTH_CHANNEL)
+            .unwrap()
+            .set_status(InstrumentChannelStatus::Muted);
+
+        session.play();
+
+        // let the arp actually start sounding first
+        for _ in 0..30 {
+            session.next_sample();
+        }
+
+        session.stop();
+
+        // release is 0.2s hardcoded in Envelope::new -- comfortably
+        // covered by a generous window at this test's tiny sample rate
+        let mut last = (1.0, 1.0);
+        for _ in 0..64 {
+            last = session.next_sample();
+        }
+
+        assert_eq!(
+            last,
+            (0.0, 0.0),
+            "expected stop() to fully silence the arp, not just the shared transport"
+        );
     }
 
     #[test]
