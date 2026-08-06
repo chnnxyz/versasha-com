@@ -710,9 +710,11 @@ mod tests {
     fn solo_restricts_mix_to_soloed_tracks_only() {
         let mut machine = test_machine();
 
-        // every track starts "live" at position 0 on a fresh machine;
-        // soloing snare (index 1) should exclude kick's (index 0) output
-        // from the mix even though kick is still genuinely playing
+        // snare (index 1) needs an explicit trigger before it produces
+        // real output; kick (index 0) is left untriggered on purpose --
+        // soloing snare must exclude kick from the mix regardless of
+        // whether kick is even playing
+        machine.trigger_track(1);
         machine.set_track_status(1, SampleTrackStatus::Solo);
 
         let output = machine.next_sample();
@@ -726,10 +728,10 @@ mod tests {
 
         machine.set_master_volume(0.25);
 
-        // Kick/Tom/HiHat tracks now carry an ADEnvelope that starts Idle
-        // (silent) until triggered, unlike SamplePlayer which is always
-        // "live" from position 0 -- trigger every track explicitly so
-        // this test still measures the full 11-track mix
+        // every track needs an explicit trigger before it produces real
+        // output (Kick/Tom/HiHat via their ADEnvelope, every track via
+        // the underlying SamplePlayer) -- trigger all of them so this
+        // test still measures the full 11-track mix
         for index in 0..machine.track_count() {
             machine.trigger_track(index);
         }

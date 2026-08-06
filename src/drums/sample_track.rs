@@ -265,11 +265,15 @@ mod tests {
     fn next_sample_applies_volume() {
         // Clap deliberately: no envelope/tune/snappy attached to it, so
         // this stays a pure test of volume scaling, not entangled with
-        // Kick's now-mandatory envelope gating (see the tests further down
-        // that specifically cover envelope/tune/snappy wiring)
+        // Kick's envelope wiring (see the tests further down that
+        // specifically cover envelope/tune/snappy). trigger() is still
+        // required though -- SamplePlayer itself stays silent until
+        // triggered, regardless of whether a track type has an envelope
+        // on top of that.
         let sample = AudioSample::new(48_000.0, vec![2.0, 4.0]);
 
         let mut track = SampleTrack::new(sample, 48_000.0, SampleTrackType::Clap);
+        track.trigger();
 
         track.set_volume(0.5);
 
@@ -292,6 +296,7 @@ mod tests {
         let sample = AudioSample::new(48_000.0, vec![5.0]);
 
         let mut track = SampleTrack::new(sample, 48_000.0, SampleTrackType::Clap);
+        track.trigger();
 
         track.set_status(SampleTrackStatus::Solo);
 
@@ -303,6 +308,7 @@ mod tests {
         let sample = AudioSample::new(48_000.0, vec![10.0, 20.0, 30.0]);
 
         let mut track = SampleTrack::new(sample, 48_000.0, SampleTrackType::Clap);
+        track.trigger();
 
         track.set_status(SampleTrackStatus::Muted);
 
@@ -322,13 +328,29 @@ mod tests {
 
         let mut track = SampleTrack::new(sample, 48_000.0, SampleTrackType::Clap);
 
-        track.next_sample();
-
-        track.next_sample();
-
         track.trigger();
+        track.next_sample(); // consumes index 0
+        track.next_sample(); // consumes index 1
+
+        track.trigger(); // restart, partway through the sample
 
         assert_approx_eq(track.next_sample(), 1.0);
+    }
+
+    #[test]
+    fn next_sample_stays_silent_before_the_first_trigger() {
+        // the actual bug this guards against: without an explicit
+        // trigger, a fresh track used to play its sample from the very
+        // first next_sample() call -- for track types with no envelope
+        // (Clap, Cymbal, RimShot) that meant it played once,
+        // completely unprompted, the moment the engine was constructed
+        let sample = AudioSample::new(48_000.0, vec![5.0, 5.0, 5.0]);
+
+        let mut track = SampleTrack::new(sample, 48_000.0, SampleTrackType::Cymbal);
+
+        for _ in 0..3 {
+            assert_approx_eq(track.next_sample(), 0.0);
+        }
     }
 
     // --- Tune (pitch) -------------------------------------------------
@@ -354,12 +376,15 @@ mod tests {
     #[test]
     fn set_tune_updates_semitones_and_playback_rate() {
         // Snare: supports tune but not envelope, so this stays a pure
-        // tune test without needing an explicit trigger() first. rate =
-        // 4.0 so the sample's own native rate (4.0) matches the engine
-        // rate, leaving pitch_multiplier as the only thing scaling the
-        // advance rate below
+        // tune test without any envelope state to account for -- still
+        // needs trigger() though, since SamplePlayer itself stays silent
+        // until triggered regardless. rate = 4.0 so the sample's own
+        // native rate (4.0) matches the engine rate, leaving
+        // pitch_multiplier as the only thing scaling the advance rate
+        // below
         let sample = AudioSample::new(4.0, vec![10.0, 20.0, 30.0, 40.0]);
         let mut track = SampleTrack::new(sample, 4.0, SampleTrackType::Snare);
+        track.trigger();
 
         track.set_tune(12.0); // +1 octave -> 2x playback rate
 
@@ -377,9 +402,9 @@ mod tests {
         let sample = AudioSample::new(16.0, vec![7.0, 7.0]);
         let mut track = SampleTrack::new(sample, 16.0, SampleTrackType::Kick);
 
-        // Kick's ADEnvelope starts Idle -- unlike SamplePlayer, which is
-        // always "live" from position 0, a percussive envelope must be
-        // triggered before it contributes any sound
+        // both Kick's ADEnvelope and the underlying SamplePlayer start
+        // out untriggered -- either one alone would already keep this
+        // silent, but neither opens up until trigger() is called
         assert_approx_eq(track.next_sample(), 0.0);
     }
 
@@ -459,6 +484,7 @@ mod tests {
     fn full_snappy_replaces_the_sample_entirely_with_noise() {
         let sample = AudioSample::new(48_000.0, vec![0.3, 0.3, 0.3]);
         let mut track = SampleTrack::new(sample, 48_000.0, SampleTrackType::Snare);
+        track.trigger();
 
         track.set_snappy(1.0);
 
@@ -475,10 +501,12 @@ mod tests {
         // come from the shaping, not from the noise generator itself
         let loud_sample = AudioSample::new(48_000.0, vec![0.9]);
         let mut loud_track = SampleTrack::new(loud_sample, 48_000.0, SampleTrackType::Snare);
+        loud_track.trigger();
         loud_track.set_snappy(1.0);
 
         let quiet_sample = AudioSample::new(48_000.0, vec![0.1]);
         let mut quiet_track = SampleTrack::new(quiet_sample, 48_000.0, SampleTrackType::Snare);
+        quiet_track.trigger();
         quiet_track.set_snappy(1.0);
 
         let loud_output = loud_track.next_sample().abs();
@@ -494,6 +522,7 @@ mod tests {
     fn snappy_noise_stops_once_the_underlying_sample_is_exhausted() {
         let sample = AudioSample::new(48_000.0, vec![0.3, 0.3]);
         let mut track = SampleTrack::new(sample, 48_000.0, SampleTrackType::Snare);
+        track.trigger();
 
         track.set_snappy(1.0);
 

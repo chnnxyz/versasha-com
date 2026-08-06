@@ -7,6 +7,7 @@ pub struct SamplePlayer {
     start_position: f32,
     end_position: f32,
     pitch_multiplier: f32,
+    triggered: bool,
 }
 
 impl SamplePlayer {
@@ -22,6 +23,7 @@ impl SamplePlayer {
             start_position: start_pos.unwrap_or(0.0),
             end_position: end_pos.unwrap_or(sample.len() as f32),
             pitch_multiplier: 1.0,
+            triggered: false,
         }
     }
 
@@ -42,6 +44,10 @@ impl SamplePlayer {
         self.pitch_multiplier
     }
 
+    pub fn is_triggered(&self) -> bool {
+        self.triggered
+    }
+
     //settters (for potential future things like starting the sample at a different point or ending it earlt)
     pub fn set_start_position(&mut self, pos: f32) {
         self.start_position = pos;
@@ -59,7 +65,7 @@ impl SamplePlayer {
     }
 
     pub fn next_sample(&mut self, sample: &AudioSample) -> f32 {
-        if self.position >= self.end_position {
+        if !self.triggered || self.position >= self.end_position {
             return 0.0;
         }
         let value: f32 = sample.sample_at(self.position);
@@ -69,11 +75,12 @@ impl SamplePlayer {
     }
 
     pub fn is_finished(&self) -> bool {
-        self.position >= self.end_position
+        !self.triggered || self.position >= self.end_position
     }
 
     pub fn reset(&mut self) {
         self.position = self.start_position;
+        self.triggered = true;
     }
 }
 
@@ -119,10 +126,57 @@ mod tests {
     }
 
     #[test]
+    fn new_player_is_not_triggered_and_stays_silent() {
+        let sample = AudioSample::new(48_000.0, vec![1.0, 2.0, 3.0]);
+
+        let mut player = SamplePlayer::new(48_000.0, None, None, &sample);
+
+        assert!(!player.is_triggered());
+
+        assert_approx_eq(player.next_sample(&sample), 0.0);
+        assert_approx_eq(player.next_sample(&sample), 0.0);
+        assert_approx_eq(player.next_sample(&sample), 0.0);
+    }
+
+    #[test]
+    fn position_does_not_advance_before_being_triggered() {
+        let sample = AudioSample::new(48_000.0, vec![1.0, 2.0, 3.0]);
+
+        let mut player = SamplePlayer::new(48_000.0, None, None, &sample);
+
+        player.next_sample(&sample);
+        player.next_sample(&sample);
+
+        assert_approx_eq(player.position(), player.start_position());
+    }
+
+    #[test]
+    fn is_finished_is_true_before_being_triggered() {
+        let sample = AudioSample::new(48_000.0, vec![1.0, 2.0, 3.0]);
+
+        let player = SamplePlayer::new(48_000.0, None, None, &sample);
+
+        assert!(player.is_finished());
+    }
+
+    #[test]
+    fn reset_marks_the_player_as_triggered() {
+        let sample = AudioSample::new(48_000.0, vec![1.0, 2.0, 3.0]);
+
+        let mut player = SamplePlayer::new(48_000.0, None, None, &sample);
+        assert!(!player.is_triggered());
+
+        player.reset();
+
+        assert!(player.is_triggered());
+    }
+
+    #[test]
     fn next_sample_reads_current_position_before_advancing() {
         let sample = AudioSample::new(48_000.0, vec![1.0, 2.0, 3.0, 4.0]);
 
         let mut player = SamplePlayer::new(48_000.0, None, None, &sample);
+        player.reset();
 
         assert_approx_eq(player.next_sample(&sample), 1.0);
 
@@ -138,6 +192,7 @@ mod tests {
         let sample = AudioSample::new(48_000.0, vec![1.0, 2.0]);
 
         let mut player = SamplePlayer::new(48_000.0, None, None, &sample);
+        player.reset();
 
         player.next_sample(&sample);
 
@@ -153,6 +208,7 @@ mod tests {
         let sample = AudioSample::new(48_000.0, vec![1.0, 2.0, 3.0, 4.0, 5.0]);
 
         let mut player = SamplePlayer::new(48_000.0, None, Some(2.0), &sample);
+        player.reset();
 
         assert_approx_eq(player.next_sample(&sample), 1.0);
 
@@ -167,7 +223,8 @@ mod tests {
     fn is_finished_is_false_before_reaching_end_position() {
         let sample = AudioSample::new(48_000.0, vec![1.0, 2.0, 3.0]);
 
-        let player = SamplePlayer::new(48_000.0, None, None, &sample);
+        let mut player = SamplePlayer::new(48_000.0, None, None, &sample);
+        player.reset();
 
         assert!(!player.is_finished());
     }
@@ -177,6 +234,7 @@ mod tests {
         let sample = AudioSample::new(48_000.0, vec![1.0, 2.0]);
 
         let mut player = SamplePlayer::new(48_000.0, None, None, &sample);
+        player.reset();
 
         player.next_sample(&sample);
 
@@ -191,9 +249,10 @@ mod tests {
 
         let mut player = SamplePlayer::new(48_000.0, Some(3.0), None, &sample);
 
-        player.next_sample(&sample);
+        player.reset(); // trigger it so next_sample actually advances
+        player.next_sample(&sample); // position moves from 3.0 to 4.0
 
-        player.reset();
+        player.reset(); // reset again -- should go back to 3.0, not 0.0
 
         assert_approx_eq(player.position(), 3.0);
     }
@@ -204,10 +263,10 @@ mod tests {
 
         let mut player = SamplePlayer::new(48_000.0, Some(1.0), None, &sample);
 
+        player.reset();
         assert_approx_eq(player.next_sample(&sample), 20.0);
 
         player.reset();
-
         assert_approx_eq(player.next_sample(&sample), 20.0);
     }
 
@@ -216,6 +275,7 @@ mod tests {
         let sample = AudioSample::new(24_000.0, vec![10.0, 20.0, 30.0, 40.0]);
 
         let mut player = SamplePlayer::new(48_000.0, None, None, &sample);
+        player.reset();
 
         // buffer rate is half the engine rate, so each source sample is
         // read twice before advancing to the next one
@@ -242,6 +302,7 @@ mod tests {
         let sample = AudioSample::new(48_000.0, vec![10.0, 20.0, 30.0, 40.0]);
 
         let mut player = SamplePlayer::new(48_000.0, None, None, &sample);
+        player.reset();
 
         player.set_pitch_multiplier(2.0);
 
