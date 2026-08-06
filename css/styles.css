@@ -10,7 +10,7 @@ body {
 body {
     min-height: 100vh;
     margin: 0;
-    padding: 24px;
+    padding: clamp(16px, 3vh, 40px) clamp(16px, 3vw, 40px);
 
     display: grid;
     place-items: center;

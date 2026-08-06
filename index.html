@@ -63,6 +63,35 @@
             width: min(1100px, 100%);
         }
 
+        :root {
+            --ui-scale: 1;
+        }
+
+        /* one scale factor drives the whole desktop layout together --
+           the outer margin (body's padding, below) and literally every
+           control on the page (via zoom on main.page) -- so they shrink
+           and grow in the same ratio as vh changes instead of each
+           having its own separate relationship to the viewport and
+           drifting out of proportion with each other. 680px is about
+           the shortest a real desktop browser window gets before it's
+           arguably not "desktop" anymore; 950px is a normal laptop
+           viewport and lands at the page's natural 1:1 size; taller
+           viewports get modestly roomier (capped at 1.15x, so a huge
+           external display doesn't get comically oversized knobs). */
+        @media (min-width: 761px) {
+            :root {
+                --ui-scale: clamp(0.7, 0.7 + (100vh - 680px) / 900px, 1.15);
+            }
+
+            body {
+                padding: calc(24px * var(--ui-scale));
+            }
+
+            main.page {
+                zoom: var(--ui-scale);
+            }
+        }
+
         header {
             display: flex;
             flex-wrap: wrap;
@@ -138,11 +167,260 @@
             margin: 0;
         }
 
+        .view-subtitle-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* every instrument's subtitle is stacked in this same grid cell
+           (see .view-subtitle below) instead of swapped via textContent
+           -- grid sizes the cell to the widest of them regardless of
+           which one is currently visible, so this box's width (and
+           everything laid out after it in the header) stays constant
+           across instruments instead of shifting with the text length */
+        .view-subtitle-stack {
+            display: grid;
+        }
+
         .view-subtitle {
+            grid-area: 1 / 1;
+            visibility: hidden;
+
             color: #888;
 
             font-size: 11px;
             letter-spacing: 0.06em;
+        }
+
+        .view-subtitle.active {
+            visibility: visible;
+        }
+
+        /* sits right next to the view's subtitle, same line-height as
+           that 11px text so it never bumps the row taller */
+        .info-button {
+            display: inline-flex;
+            flex-shrink: 0;
+            align-items: center;
+            justify-content: center;
+
+            width: 11px;
+            height: 11px;
+
+            border: 1px solid #888;
+            border-radius: 50%;
+            padding: 0;
+
+            background: transparent;
+            color: #888;
+
+            font-size: 8px;
+            line-height: 1;
+            font-family: inherit;
+
+            cursor: pointer;
+        }
+
+        .info-button:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .info-modal {
+            width: min(560px, 92vw);
+
+            padding: 0;
+            border: 1px solid #fff;
+
+            background: #000;
+            color: #fff;
+        }
+
+        .info-modal::backdrop {
+            background: rgba(0, 0, 0, 0.85);
+        }
+
+        .info-modal-content {
+            position: relative;
+
+            /* a safety net, not the goal -- each view's info body is
+               written to fit within this without scrolling on a normal
+               desktop viewport; scrolling only kicks in on unusually
+               short windows */
+            max-height: 80vh;
+            overflow-y: auto;
+
+            padding: 22px;
+        }
+
+        .info-modal-close {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+
+            width: 26px;
+            height: 26px;
+
+            border: 1px solid #fff;
+            background: #000;
+
+            color: #fff;
+
+            font-size: 15px;
+            line-height: 1;
+
+            cursor: pointer;
+
+            transition:
+                background 0.15s ease,
+                color 0.15s ease;
+        }
+
+        .info-modal-close:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .info-modal-title {
+            margin: 0 0 14px;
+
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .info-modal-content h3 {
+            margin: 0 0 8px;
+
+            color: #888;
+
+            font-size: 10px;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .info-modal-content p {
+            margin: 0 0 14px;
+
+            color: #ccc;
+
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .info-knob-list {
+            columns: 2;
+            column-gap: 20px;
+
+            margin: 0 0 4px;
+        }
+
+        .info-knob {
+            break-inside: avoid;
+
+            margin-bottom: 10px;
+        }
+
+        .info-knob-name {
+            color: #fff;
+
+            font-size: 11px;
+            letter-spacing: 0.03em;
+        }
+
+        .info-knob-desc {
+            margin: 2px 0 0;
+
+            color: #888;
+
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        /* a small, non-interactive replica of #mobile-keys -- always
+           visible (unlike the real on-screen keyboard, which is
+           coarse-pointer-only) and labeled with the computer key instead
+           of the note name, since the point here is showing the mapping */
+        .info-keys {
+            position: relative;
+
+            height: 60px;
+            margin-bottom: 14px;
+
+            border: 1px solid #fff;
+        }
+
+        .info-keys-white {
+            display: flex;
+
+            height: 100%;
+        }
+
+        .info-key {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 1px;
+        }
+
+        .info-key-white {
+            flex: 1 0 0;
+            padding-bottom: 5px;
+
+            background: #fff;
+            color: #000;
+
+            border-right: 1px solid #000;
+        }
+
+        .info-key-white:last-child {
+            border-right: 0;
+        }
+
+        .info-keys-black {
+            position: absolute;
+            top: 0;
+            left: 0;
+
+            width: 100%;
+            height: 58%;
+        }
+
+        .info-key-black {
+            position: absolute;
+            top: 0;
+
+            width: calc(100% / 7 * 0.6);
+            height: 100%;
+
+            left: calc((var(--pos) + 1) * (100% / 7));
+            transform: translateX(-50%);
+            padding-bottom: 4px;
+
+            background: #000;
+            color: #fff;
+            border: 1px solid #fff;
+        }
+
+        .info-key-letter {
+            font-size: 10px;
+            font-weight: 500;
+            line-height: 1;
+        }
+
+        .info-key-note {
+            font-size: 8px;
+            line-height: 1;
+
+            color: #888;
+        }
+
+        .info-key-black .info-key-note {
+            color: #aaa;
         }
 
         /* a small status dot instead of a text button -- any real gesture
@@ -274,8 +552,10 @@
            never resizes the page (and never moves the header above it) --
            each view's own content, which naturally varies in height, is
            centered within that shared canvas instead of pinned to the
-           top. 700px comfortably fits a normal desktop browser viewport
-           without the page itself ever needing to scroll. */
+           top. this is a plain fixed value on purpose: --ui-scale below
+           (via zoom on main.page) is what makes it -- and everything
+           else on the page -- actually adapt to the viewport, so this
+           number doesn't need its own separate vh-based logic. */
         @media (min-width: 761px) {
             /* :not([hidden]) matters here -- plain .view{display:flex}
                would override the [hidden] attribute's own display:none
@@ -1322,7 +1602,24 @@
         <header>
             <div class="brand">
                 <h1>versasha.com</h1>
-                <div id="view-subtitle" class="view-subtitle">VS-2: Subtractive Synth</div>
+                <div class="view-subtitle-row">
+                    <div class="view-subtitle-stack">
+                        <div class="view-subtitle active" data-view="synth">VS-2: Subtractive Synth</div>
+                        <div class="view-subtitle" data-view="drums">VS-909: Rhythm Composer</div>
+                        <div class="view-subtitle" data-view="bass">VS-303: Bassline Sequencer</div>
+                        <div class="view-subtitle" data-view="arp">VS-16: Step Arpeggiator</div>
+                        <div class="view-subtitle" data-view="mixer">VSM-900: Multi-Channel Mixer</div>
+                    </div>
+
+                    <button
+                        id="info-button"
+                        type="button"
+                        class="info-button"
+                        aria-label="How to use this instrument"
+                        aria-haspopup="dialog"
+                        title="How to use this instrument"
+                    >i</button>
+                </div>
             </div>
 
             <div class="transport-controls" role="group" aria-label="Transport">
@@ -2538,6 +2835,21 @@
             <a href="./music.html">Music</a>
         </nav>
     </main>
+
+    <dialog id="info-modal" class="info-modal" aria-labelledby="info-modal-title">
+        <div class="info-modal-content">
+            <button
+                id="info-modal-close"
+                type="button"
+                class="info-modal-close"
+                aria-label="Close"
+            >&times;</button>
+
+            <h2 id="info-modal-title" class="info-modal-title"></h2>
+
+            <div id="info-modal-body"></div>
+        </div>
+    </dialog>
 
     <script type="module">
         const audio =
@@ -4356,15 +4668,7 @@
         );
         const engineTabs = document.querySelectorAll(".engine-tab");
 
-        const VIEW_SUBTITLES = {
-            synth: "VS-2: Subtractive Synth",
-            drums: "VS-909: Rhythm Composer",
-            bass: "VS-303: Bassline Sequencer",
-            arp: "VS-16: Step Arpeggiator",
-            mixer: "VSM-900: Multi-Channel Mixer"
-        };
-
-        const viewSubtitleEl = document.getElementById("view-subtitle");
+        const viewSubtitleEls = document.querySelectorAll(".view-subtitle");
 
         engineTabs.forEach(tab => {
             tab.addEventListener("click", () => {
@@ -4379,8 +4683,192 @@
                     other.setAttribute("aria-selected", other === tab ? "true" : "false");
                 });
 
-                viewSubtitleEl.textContent = VIEW_SUBTITLES[view];
+                viewSubtitleEls.forEach(subtitle => {
+                    subtitle.classList.toggle("active", subtitle.dataset.view === view);
+                });
+                currentView = view;
             });
+        });
+
+        // --- Info modal --------------------------------------------------
+        //
+        // One button, next to whichever view-subtitle is currently shown;
+        // its content swaps to match currentView instead of each view
+        // getting its own button.
+
+        let currentView = "synth";
+
+        function infoKnob(name, description) {
+            return `
+                <div class="info-knob">
+                    <div class="info-knob-name">${name}</div>
+                    <div class="info-knob-desc">${description}</div>
+                </div>
+            `;
+        }
+
+        function infoKnobList(entries) {
+            return `<div class="info-knob-list">${entries.map(entry => infoKnob(...entry)).join("")}</div>`;
+        }
+
+        const KNOB_USAGE_NOTE = "Click a knob and drag up/down to adjust it. Hold Shift while dragging (or while scrolling on it) for finer control, scroll to nudge it by one step, and double-click it to reset to its default.";
+
+        // labeled with the computer key (not the note name) -- this is
+        // showing the mapping itself, not standing in for the real
+        // on-screen keyboard
+        const INFO_KEYS_DIAGRAM = `
+            <div class="info-keys" aria-hidden="true">
+                <div class="info-keys-white">
+                    <div class="info-key info-key-white"><span class="info-key-letter">A</span><span class="info-key-note">C</span></div>
+                    <div class="info-key info-key-white"><span class="info-key-letter">S</span><span class="info-key-note">D</span></div>
+                    <div class="info-key info-key-white"><span class="info-key-letter">D</span><span class="info-key-note">E</span></div>
+                    <div class="info-key info-key-white"><span class="info-key-letter">F</span><span class="info-key-note">F</span></div>
+                    <div class="info-key info-key-white"><span class="info-key-letter">G</span><span class="info-key-note">G</span></div>
+                    <div class="info-key info-key-white"><span class="info-key-letter">H</span><span class="info-key-note">A</span></div>
+                    <div class="info-key info-key-white"><span class="info-key-letter">J</span><span class="info-key-note">B</span></div>
+                </div>
+                <div class="info-keys-black">
+                    <div class="info-key info-key-black" style="--pos:0"><span class="info-key-letter">W</span></div>
+                    <div class="info-key info-key-black" style="--pos:1"><span class="info-key-letter">E</span></div>
+                    <div class="info-key info-key-black" style="--pos:3"><span class="info-key-letter">T</span></div>
+                    <div class="info-key info-key-black" style="--pos:4"><span class="info-key-letter">Y</span></div>
+                    <div class="info-key info-key-black" style="--pos:5"><span class="info-key-letter">U</span></div>
+                </div>
+            </div>
+        `;
+
+        const VIEW_INFO = {
+            synth: {
+                title: "VS-2: Subtractive Synth",
+                body: `
+                    <h3>Playing notes</h3>
+                    ${INFO_KEYS_DIAGRAM}
+                    <p>The bottom row of letters plays the white keys, the row above plays the black keys (sharps). Hold multiple keys at once for chords -- each held key keeps sounding until you let go of it.</p>
+
+                    <h3>Knobs</h3>
+                    <p>${KNOB_USAGE_NOTE}</p>
+                    ${infoKnobList([
+                        ["Osc 1/2 – Level", "Volume of that oscillator's signal in the mix."],
+                        ["Osc 2 – Detune", "Pitch offset in cents against Osc 1, for thickening/unison."],
+                        ["Filter – Cutoff", "Frequency where the selected filter type starts shaping the sound."],
+                        ["Filter – Resonance", "Emphasis right around the cutoff frequency."],
+                        ["LFO – Rate", "Speed of the LFO's cycle, in Hz."],
+                        ["LFO – Amount", "How strongly the LFO affects its selected target."],
+                        ["Delay – Time", "Gap between the dry signal and its first echo."],
+                        ["Delay – Feedback", "How much of each echo feeds back into the next one."],
+                        ["Delay – Mix", "Balance between dry and delayed signal."],
+                        ["Output – Volume", "Overall level of the synth engine."]
+                    ])}
+                `
+            },
+
+            drums: {
+                title: "VS-909: Rhythm Composer",
+                body: `
+                    <h3>Sequencing</h3>
+                    <p>Click a step cell to toggle it on/off for that track -- the pattern loops with the transport. Click a track's own name to trigger/preview it directly. M mutes a track; S solos it, so only soloed tracks are heard.</p>
+
+                    <h3>Knobs</h3>
+                    <p>${KNOB_USAGE_NOTE} Which of these a track has depends on the sound -- every track gets Lvl, most pitched drums add Tune.</p>
+                    ${infoKnobList([
+                        ["Lvl", "That track's own volume."],
+                        ["Tune", "Pitch of the sample, in semitones."],
+                        ["Atk", "How quickly the hit fades in (kick only)."],
+                        ["Dcy", "How quickly the hit fades out."],
+                        ["Snap", "Blend between the snare's tone and its noise/snap layer."],
+                        ["Master", "Overall level of the whole drum kit."]
+                    ])}
+                `
+            },
+
+            bass: {
+                title: "VS-303: Bassline Sequencer",
+                body: `
+                    <h3>Step sequencer</h3>
+                    <p>Each step is a note: click its cell to toggle the step on/off and use the dropdown to change its pitch. A = Accent (louder, brighter). S = Slide (glides into the next note instead of retriggering) -- classic 303 behavior.</p>
+
+                    <h3>Knobs</h3>
+                    <p>${KNOB_USAGE_NOTE}</p>
+                    ${infoKnobList([
+                        ["Tuning", "Coarse pitch offset for the whole voice, in semitones."],
+                        ["Cutoff", "Frequency where the filter starts shaping the sound."],
+                        ["Resonance", "Emphasis right around the cutoff -- classic acid squelch at high settings."],
+                        ["Env Mod", "How much the envelope sweeps the filter cutoff on each note."],
+                        ["Decay", "How long that filter sweep takes to fall back."],
+                        ["Accent", "How much louder/brighter an accented step hits."],
+                        ["Glide Time", "How long a slide takes to glide between two notes."],
+                        ["Master", "Overall level of the bass engine."]
+                    ])}
+                `
+            },
+
+            arp: {
+                title: "VS-16: Step Arpeggiator",
+                body: `
+                    <h3>Chord editor</h3>
+                    <p>Click cells in the piano roll to build a chord for that step (4 steps total). Once the transport is running, the arpeggiator automatically plays through each step's chord for you -- no keys to hold.</p>
+
+                    <h3>Knobs &amp; controls</h3>
+                    <p>${KNOB_USAGE_NOTE}</p>
+                    ${infoKnobList([
+                        ["Mode", "Direction notes are played in: Up, Down, Up/Down, or Random."],
+                        ["Note Rate", "Speed individual notes are struck at, within a chord."],
+                        ["Chord Rate", "Speed the pattern advances between its 4 chord steps."],
+                        ["Octaves", "Range of the chord editor / how many octaves the pattern spans."],
+                        ["Waveform", "Oscillator shape for the arpeggiator's own voice."],
+                        ["Master", "Overall level of the arp engine."]
+                    ])}
+                `
+            },
+
+            mixer: {
+                title: "VSM-900: Multi-Channel Mixer",
+                body: `
+                    <h3>Channel strips</h3>
+                    <p>Every channel (Synth/Drums/Bass/Arp) gets 3-band EQ, a VU meter, Pan, and a volume fader with its own M(ute)/S(olo) buttons. Master gets a stereo VU meter instead of a per-channel one.</p>
+
+                    <h3>Knobs</h3>
+                    <p>${KNOB_USAGE_NOTE}</p>
+                    ${infoKnobList([
+                        ["Hi / Mid / Low", "Boost or cut that EQ band for the channel."],
+                        ["Pan", "Position in the stereo field, left to right."],
+                        ["Fader", "That channel's own volume, separate from the instrument's own Output knob."],
+                        ["Master", "Overall output level after every channel is summed."]
+                    ])}
+
+                    <h3>Beat FX</h3>
+                    <p>Pick an Effect (Delay/Reverb/Flanger), the Channel it applies to, and a Rate synced to the transport. Dry/Wet blends it in, and the button below switches the effect on or off.</p>
+                `
+            }
+        };
+
+        const infoButton = document.getElementById("info-button");
+        const infoModal = document.getElementById("info-modal");
+        const infoModalTitle = document.getElementById("info-modal-title");
+        const infoModalBody = document.getElementById("info-modal-body");
+        const infoModalClose = document.getElementById("info-modal-close");
+
+        infoButton.addEventListener("click", () => {
+            const info = VIEW_INFO[currentView];
+
+            infoModalTitle.textContent = info.title;
+            infoModalBody.innerHTML = info.body;
+
+            infoModal.showModal();
+        });
+
+        infoModalClose.addEventListener("click", () => {
+            infoModal.close();
+        });
+
+        // clicking the ::backdrop lands directly on the <dialog> element
+        // itself (it has no layout box of its own to absorb the click) --
+        // clicking inside .info-modal-content does not, so this only
+        // closes on genuine outside clicks
+        infoModal.addEventListener("click", event => {
+            if (event.target === infoModal) {
+                infoModal.close();
+            }
         });
 
         // --- Recording -------------------------------------------------

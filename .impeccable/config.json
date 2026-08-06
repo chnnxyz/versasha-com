@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-08-06T07:28:14.654Z",
+        "reason": "User confirmed the flat 8-15px label scale is intentional for the rack-hardware panel aesthetic; hierarchy is conveyed via color/case/letter-spacing, not size"
+      }
+    ]
+  }
+}
