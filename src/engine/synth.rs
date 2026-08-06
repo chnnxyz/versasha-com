@@ -38,7 +38,8 @@ impl Synth {
         let index = self
             .voices
             .iter()
-            .position(|voice| !voice.is_active())
+            .position(|voice| voice.is_active() && voice.frequency() == frequency)
+            .or_else(|| self.voices.iter().position(|voice| !voice.is_active()))
             .unwrap_or(0);
 
         self.voices[index].note_on(frequency);
@@ -309,6 +310,49 @@ mod tests {
         assert_eq!(
             voice_440.envelope_state(),
             crate::dsp::envelopes::EnvelopeState::Release
+        );
+    }
+
+    #[test]
+    fn note_on_retriggers_the_same_voice_if_already_sounding_that_frequency() {
+        let mut synth = Synth::new(48_000.0, 4);
+
+        synth.note_on(440.0);
+        synth.note_off(440.0); // voice stays is_active() through its whole Release
+        synth.note_on(440.0); // rapid retrigger, before that release finishes
+
+        let active_440_voices = synth
+            .voices
+            .iter()
+            .filter(|voice| voice.is_active() && voice.frequency() == 440.0)
+            .count();
+
+        assert_eq!(
+            active_440_voices, 1,
+            "expected the retrigger to reuse the existing voice, not land a second one on the same frequency"
+        );
+    }
+
+    #[test]
+    fn rapid_retrigger_then_release_does_not_leave_a_stuck_voice() {
+        let mut synth = Synth::new(48_000.0, 4);
+
+        synth.note_on(440.0);
+        synth.note_off(440.0);
+        synth.note_on(440.0); // rapid retrigger before the first voice finished releasing
+        synth.note_off(440.0); // release the note for real
+
+        let stuck = synth.voices.iter().any(|voice| {
+            matches!(
+                voice.envelope_state(),
+                crate::dsp::envelopes::EnvelopeState::Attack
+                    | crate::dsp::envelopes::EnvelopeState::Sustain
+            )
+        });
+
+        assert!(
+            !stuck,
+            "expected every voice to be releasing (or idle) after the note was let go, not stuck holding"
         );
     }
 
